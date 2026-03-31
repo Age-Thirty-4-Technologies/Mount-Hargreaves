@@ -9,7 +9,8 @@ const navLinks = [
   { name: 'Documents', path: '/documents' },
   { name: 'Achievements', path: '/achievements' },
   { name: 'Extra-Curricular', path: '/extra-curricular' },
-  { name: 'Admissions', path: '/admissions' },
+  { name: 'General Application', path: '/admissions' },
+  { name: 'Boarding Application', path: '/boarding' },
   { name: 'Contact', path: '/contact' },
 ];
 
@@ -34,7 +35,7 @@ export const Navbar = () => {
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3 lg:space-x-4">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -56,6 +57,7 @@ export const Navbar = () => {
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-gray-600 hover:text-school-green p-2"
+              aria-label="Open menu"
             >
               {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
