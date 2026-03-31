@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, Star, TrendingUp, BarChart3, Medal, Calendar, User, Award } from 'lucide-react';
+import { Trophy, Star, TrendingUp, BarChart3, Medal, Calendar, User, Award, Image as ImageIcon } from 'lucide-react';
 import { getHallOfFame, getResultsByYear, type HallOfFameEntry, type YearResults } from '../admin/utils/storage';
 
+// Put your achiever images in:
+// public/assets/achievements/
+// Then set each Hall of Fame entry image to something like:
+// /assets/achievements/2025/top-achiever-1.jpg
 const StudentAvatar = ({ image, name, year }: { image: string, name: string, year: string }) => {
   const [hasError, setHasError] = useState(!image);
 
@@ -17,9 +21,12 @@ const StudentAvatar = ({ image, name, year }: { image: string, name: string, yea
         />
       ) : (
         <div className="flex flex-col items-center justify-center text-gray-400 p-6 text-center">
-          <User size={64} className="mb-4 opacity-30" />
+          <div className="mb-4 w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-gray-200">
+            <ImageIcon className="opacity-60" />
+          </div>
           <p className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-1">{name}</p>
           <p className="text-xs text-gray-400 italic">Class of {year}</p>
+          <p className="text-[11px] text-gray-400 mt-2">Add image in <span className="font-mono">public/assets/achievements/</span></p>
         </div>
       )}
       <div className="absolute top-0 right-0 bg-school-green/10 p-4 text-school-green opacity-0 group-hover:opacity-100 transition-opacity">
@@ -89,19 +96,15 @@ export const Achievements = () => {
               Hall of Fame
               <Trophy className="text-yellow-500 w-12 h-12" />
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Celebrating outstanding learners.
-            </p>
-            <p className="text-sm text-gray-500 max-w-3xl mx-auto mt-2">
-              Names and photos can be managed in the Staff Portal.
-            </p>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">Celebrating outstanding learners.</p>
+            <p className="text-sm text-gray-500 max-w-3xl mx-auto mt-2">Names and photos can be managed in the Staff Portal.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {hallOfFame.slice(0, 8).map((student, idx) => (
               <motion.div
                 key={student.id || idx}
-                whileHover={{ scale: 1.02 }}
+                whileHover= scale: 1.02 
                 className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
               >
                 <StudentAvatar image={student.image} name={student.name} year={student.year} />
@@ -138,10 +141,10 @@ export const Achievements = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeResultsYear}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.25 }}
+              initial= opacity: 0, y: 14 
+              animate= opacity: 1, y: 0 
+              exit= opacity: 0, y: -14 
+              transition= duration: 0.25 
             >
               {!currentResults ? (
                 <div className="text-center py-24 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
@@ -190,9 +193,9 @@ export const Achievements = () => {
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-2">
                             <motion.div
-                              initial={{ width: 0 }}
+                              initial= width: 0 
                               animate={{ width: `${stat.rate}%` }}
-                              transition={{ duration: 0.45 }}
+                              transition= duration: 0.45 
                               className="bg-school-green h-2 rounded-full"
                             />
                           </div>
@@ -233,10 +236,10 @@ export const Achievements = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeAchieversYear}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.25 }}
+              initial= opacity: 0, y: 14 
+              animate= opacity: 1, y: 0 
+              exit= opacity: 0, y: -14 
+              transition= duration: 0.25 
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
             >
               {achieversByYear[activeAchieversYear] && achieversByYear[activeAchieversYear].length > 0 ? (
