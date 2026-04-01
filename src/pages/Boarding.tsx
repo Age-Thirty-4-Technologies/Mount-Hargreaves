@@ -1,22 +1,159 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle, AlertCircle, Home, FileText, Upload, BedDouble, User, Phone, Shield } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertCircle,
+  Home,
+  FileText,
+  Upload,
+  BedDouble,
+  User,
+  Phone,
+  Shield,
+} from 'lucide-react';
+import {
+  generateId,
+  generateStudentNumber,
+  getApplications,
+  setApplications,
+  type Application,
+  type UploadedFile,
+} from '../admin/utils/storage';
+
+type UploadField = {
+  key: string;
+  label: string;
+  required?: boolean;
+};
+
+const uploadFields: UploadField[] = [
+  { key: 'learnerId', label: 'Learner Birth Certificate / ID', required: true },
+  { key: 'reportCard', label: 'Latest Report Card', required: true },
+  { key: 'guardianId', label: 'Parent/Guardian ID Copy', required: true },
+  { key: 'residence', label: 'Proof of Residence', required: true },
+  { key: 'medicalCard', label: 'Medical / Clinic Card (if available)' },
+  { key: 'supportLetter', label: 'Supporting Letter (if applicable)' },
+];
+
+function todayISO() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+async function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
 
 export const Boarding = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    dob: '',
+    grade: '',
+    year: '2027',
+    boardingType: '',
+
+    guardianName: '',
+    guardianPhone: '',
+    guardianEmail: '',
+
+    address: '',
+    locality: '',
+
+    previousSchool: '',
+  });
+
+  const [files, setFiles] = useState<Record<string, File | null>>({});
+
+  const missingRequiredUploads = useMemo(() => {
+    return uploadFields
+      .filter((f) => f.required)
+      .filter((f) => !files[f.key]);
+  }, [files]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError('');
+
+    if (missingRequiredUploads.length > 0) {
+      setError('Please upload all required documents before submitting.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const uploads: UploadedFile[] = [];
+      for (const field of uploadFields) {
+        const file = files[field.key];
+        if (!file) continue;
+        const dataUrl = await fileToDataUrl(file);
+        uploads.push({
+          key: field.key,
+          label: field.label,
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          dataUrl,
+        });
+      }
+
+      const app: Application = {
+        id: generateId(),
+
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        dob: form.dob,
+        grade: form.grade,
+        year: form.year,
+
+        studentNumber: generateStudentNumber(form.year),
+
+        guardianName: form.guardianName.trim(),
+        guardianPhone: form.guardianPhone.trim(),
+        guardianEmail: form.guardianEmail.trim(),
+
+        address: form.address.trim(),
+        locality: form.locality.trim(),
+
+        previousSchool: form.previousSchool.trim(),
+
+        applicationType: 'Boarding',
+        boardingType: form.boardingType,
+
+        uploads,
+
+        subjectMarks: [],
+        averageMark: 0,
+
+        status: 'Pending',
+        submittedDate: todayISO(),
+      };
+
+      const current = getApplications();
+      setApplications([app, ...current]);
+      setSubmitted(true);
+    } catch {
+      setError('Something went wrong while submitting. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
     return (
       <div className="py-20 flex items-center justify-center min-h-[60vh]">
         <motion.div
-          initial={{ opacity: 0, y: 24, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.25 }}
+          initial= opacity: 0, y: 24, scale: 0.98 
+          animate= opacity: 1, y: 0, scale: 1 
+          transition= duration: 0.25 
           className="text-center p-10 sm:p-12 bg-white rounded-3xl shadow-2xl max-w-md"
         >
           <div className="w-20 h-20 bg-blue-100 text-school-green rounded-full flex items-center justify-center mx-auto mb-6">
@@ -64,6 +201,8 @@ export const Boarding = () => {
                   <label className="text-sm font-bold text-gray-700">Learner First Name</label>
                   <input
                     required
+                    value={form.firstName}
+                    onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                     type="text"
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   />
@@ -72,14 +211,30 @@ export const Boarding = () => {
                   <label className="text-sm font-bold text-gray-700">Learner Surname</label>
                   <input
                     required
+                    value={form.lastName}
+                    onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                     type="text"
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">Date of Birth</label>
+                  <input
+                    required
+                    value={form.dob}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                    type="date"
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700">Grade</label>
                   <select
                     required
+                    value={form.grade}
+                    onChange={(e) => setForm({ ...form, grade: e.target.value })}
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   >
                     <option value="">Select grade</option>
@@ -90,10 +245,27 @@ export const Boarding = () => {
                     <option>Grade 12</option>
                   </select>
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">Applying for Year</label>
+                  <select
+                    required
+                    value={form.year}
+                    onChange={(e) => setForm({ ...form, year: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
+                  >
+                    <option>2027</option>
+                    <option>2028</option>
+                    <option>2029</option>
+                  </select>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700">Boarding Type</label>
                   <select
                     required
+                    value={form.boardingType}
+                    onChange={(e) => setForm({ ...form, boardingType: e.target.value })}
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   >
                     <option value="">Select</option>
@@ -114,14 +286,18 @@ export const Boarding = () => {
                   <label className="text-sm font-bold text-gray-700">Parent/Guardian Name</label>
                   <input
                     required
+                    value={form.guardianName}
+                    onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
                     type="text"
-                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
+                    className="w-full p-3 rounded-xl border bordergray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700">Parent/Guardian Phone</label>
                   <input
                     required
+                    value={form.guardianPhone}
+                    onChange={(e) => setForm({ ...form, guardianPhone: e.target.value })}
                     type="tel"
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   />
@@ -130,16 +306,10 @@ export const Boarding = () => {
                   <label className="text-sm font-bold text-gray-700">Parent/Guardian Email</label>
                   <input
                     required
+                    value={form.guardianEmail}
+                    onChange={(e) => setForm({ ...form, guardianEmail: e.target.value })}
                     type="email"
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Emergency Contact (alternative)</label>
-                  <input
-                    type="tel"
-                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
-                    placeholder="Optional"
                   />
                 </div>
               </div>
@@ -150,11 +320,41 @@ export const Boarding = () => {
                 <Home size={20} className="text-school-green" /> Home Address
               </h3>
 
-              <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-gray-700">Physical Address</label>
                   <input
                     required
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    type="text"
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">Locality / Village / Suburb</label>
+                  <input
+                    required
+                    value={form.locality}
+                    onChange={(e) => setForm({ ...form, locality: e.target.value })}
+                    type="text"
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <Calendar size={20} className="text-school-green" /> Previous School (optional)
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">Previous School Name</label>
+                  <input
+                    value={form.previousSchool}
+                    onChange={(e) => setForm({ ...form, previousSchool: e.target.value })}
                     type="text"
                     className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   />
@@ -185,28 +385,52 @@ export const Boarding = () => {
 
             <section className="space-y-4">
               <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <Upload size={20} className="text-school-green" /> Boarding Documents (PDF)
+                <Upload size={20} className="text-school-green" /> Boarding Documents
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { title: 'Learner Birth Certificate / ID', icon: FileText },
-                  { title: 'Latest Report Card', icon: FileText },
-                  { title: 'Parent/Guardian ID Copy', icon: FileText },
-                  { title: 'Proof of Residence', icon: Home },
-                  { title: 'Medical / Clinic Card (if available)', icon: FileText },
-                  { title: 'Social Worker / Supporting Letter (if applicable)', icon: FileText },
-                ].map((doc) => (
-                  <div
-                    key={doc.title}
-                    className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-school-green transition-colors cursor-pointer"
+                {uploadFields.map((doc) => (
+                  <label
+                    key={doc.key}
+                    className="border-2 border-dashed border-gray-200 rounded-2xl p-5 text-left hover:border-school-green transition-colors cursor-pointer bg-white"
                   >
-                    <doc.icon className="mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm font-medium">{doc.title}</p>
-                    <p className="text-xs text-gray-400">Click to upload PDF</p>
-                  </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-school-green shrink-0">
+                        {doc.key === 'residence' ? <Home size={20} /> : <FileText size={20} />}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-gray-900 truncate">{doc.label}</p>
+                          {doc.required ? (
+                            <span className="text-[10px] font-black uppercase tracking-widest text-red-600">Required</span>
+                          ) : (
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Optional</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">PDF recommended</p>
+                        <p className="text-xs text-gray-700 mt-2 font-medium">
+                          {files[doc.key] ? `Selected: ${files[doc.key]!.name}` : 'Click to choose a file'}
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setFiles((prev) => ({ ...prev, [doc.key]: file }));
+                      }}
+                    />
+                  </label>
                 ))}
               </div>
+
+              {missingRequiredUploads.length > 0 ? (
+                <div className="text-xs text-red-600 font-semibold">
+                  Missing required uploads: {missingRequiredUploads.map((m) => m.label).join(', ')}
+                </div>
+              ) : null}
             </section>
 
             <div className="bg-yellow-50 p-4 rounded-xl flex gap-3 items-start">
@@ -217,11 +441,27 @@ export const Boarding = () => {
               </p>
             </div>
 
-            <button type="submit" className="btn-primary w-full py-4 text-lg shadow-lg shadow-blue-900/20">
-              Submit Boarding Application
+            {error ? (
+              <div className="bg-red-50 p-4 rounded-xl flex gap-3 items-start">
+                <Shield className="text-red-600 shrink-0" size={20} />
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="btn-primary w-full py-4 text-lg shadow-lg shadow-blue-900/20 disabled:opacity-60"
+            >
+              {submitting ? 'Submitting...' : 'Submit Boarding Application'}
             </button>
           </form>
         </div>
+
+        <p className="text-xs text-gray-500 mt-4">
+          Note: Applications and uploads are saved in the school browser storage for this demo. For a real deployment,
+          connect the staff portal to a database so staff can access submissions from any device.
+        </p>
       </div>
     </div>
   );
