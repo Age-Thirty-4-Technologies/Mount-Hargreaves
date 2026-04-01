@@ -10,6 +10,7 @@ import {
   User,
   Phone,
   Shield,
+  Calendar,
 } from 'lucide-react';
 import {
   generateId,
@@ -111,12 +112,14 @@ export const Boarding = () => {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         dob: form.dob,
+        gender: '',
         grade: form.grade,
         year: form.year,
 
         studentNumber: generateStudentNumber(form.year),
 
         guardianName: form.guardianName.trim(),
+        guardianRelationship: '',
         guardianPhone: form.guardianPhone.trim(),
         guardianEmail: form.guardianEmail.trim(),
 
@@ -124,6 +127,9 @@ export const Boarding = () => {
         locality: form.locality.trim(),
 
         previousSchool: form.previousSchool.trim(),
+        lastGradeCompleted: '',
+
+        medicalInfo: '',
 
         applicationType: 'Boarding',
         boardingType: form.boardingType,
@@ -151,9 +157,9 @@ export const Boarding = () => {
     return (
       <div className="py-20 flex items-center justify-center min-h-[60vh]">
         <motion.div
-          initial= opacity: 0, y: 24, scale: 0.98 
-          animate= opacity: 1, y: 0, scale: 1 
-          transition= duration: 0.25 
+          initial={{ opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.25 }}
           className="text-center p-10 sm:p-12 bg-white rounded-3xl shadow-2xl max-w-md"
         >
           <div className="w-20 h-20 bg-blue-100 text-school-green rounded-full flex items-center justify-center mx-auto mb-6">
@@ -289,7 +295,7 @@ export const Boarding = () => {
                     value={form.guardianName}
                     onChange={(e) => setForm({ ...form, guardianName: e.target.value })}
                     type="text"
-                    className="w-full p-3 rounded-xl border bordergray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
+                    className="w-full p-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-school-green/20 outline-none"
                   />
                 </div>
                 <div className="space-y-2">
