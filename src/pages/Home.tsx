@@ -66,10 +66,10 @@ export const Home = () => {
           {stats.map((stat, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.3 }}
+              initial= opacity: 0, y: 20 
+              whileInView= opacity: 1, y: 0 
+              viewport= once: true 
+              transition= delay: i * 0.1, duration: 0.3 
               className="bg-white p-8 rounded-2xl shadow-xl flex items-center gap-6 border-b-4 border-school-green"
             >
               <div className="p-4 bg-green-50 rounded-xl text-school-green">
@@ -87,9 +87,9 @@ export const Home = () => {
       {/* Vision Section */}
       <section className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="section-title">Our Vision</h2>
+          <h2 className="section-title">Our Motto</h2>
           <p className="text-2xl text-gray-700 leading-relaxed font-light italic">
-            "A world-class institution that competes in producing holistic and well-equipped citizens, who positively change the world."
+            "Learning with discipline, respect, and pride."
           </p>
         </div>
       </section>
