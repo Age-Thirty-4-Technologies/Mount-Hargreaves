@@ -2,6 +2,23 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Facebook } from 'lucide-react';
 
+const TikTokIcon = (props: { size?: number; className?: string }) => {
+  const size = props.size ?? 20;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      className={props.className}
+      aria-hidden="true"
+    >
+      <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.372V2h-3.58v13.2a2.988 2.988 0 0 1-2.99 2.99 2.988 2.988 0 0 1-2.99-2.99 2.988 2.988 0 0 1 2.99-2.99c.304 0 .598.047.875.133V8.69a6.58 6.58 0 0 0-.875-.06A6.57 6.57 0 0 0 2.68 15.2a6.57 6.57 0 0 0 6.57 6.57 6.57 6.57 0 0 0 6.57-6.57V9.207a8.318 8.318 0 0 0 3.77.92V6.686Z" />
+    </svg>
+  );
+};
+
 export const Footer = () => {
   return (
     <footer className="bg-school-green text-white pt-16 pb-8">
@@ -28,6 +45,15 @@ export const Footer = () => {
                 aria-label="Facebook"
               >
                 <Facebook size={20} />
+              </a>
+              <a
+                href="https://www.tiktok.com/@mt.hargreavessss"
+                target="_blank"
+                rel="noreferrer"
+                className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                aria-label="TikTok"
+              >
+                <TikTokIcon size={20} />
               </a>
             </div>
           </div>
