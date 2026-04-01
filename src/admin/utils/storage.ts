@@ -18,17 +18,61 @@ export interface DocumentItem {
   uploadDate: string;
 }
 
+export type UploadedFile = {
+  key: string;
+  label: string;
+  fileName: string;
+  mimeType: string;
+  dataUrl: string; // base64
+};
+
+export type SubjectMark = {
+  subject: string;
+  mark: number; // 0-100
+};
+
 export interface Application {
   id: string;
+
+  // Learner
   firstName: string;
   lastName: string;
-  grade: string;
   dob: string;
+  gender?: string;
+  grade: string;
+  year: string;
+
+  // Generated
+  studentNumber: string;
+
+  // Parent / Guardian
   guardianName: string;
+  guardianRelationship?: string;
   guardianPhone: string;
   guardianEmail: string;
+
+  // Address
   address: string;
+  locality: string;
+
+  // School history
   previousSchool: string;
+  lastGradeCompleted?: string;
+
+  // Notes
+  medicalInfo?: string;
+
+  // Boarding
+  applicationType: 'General' | 'Boarding';
+  boardingType?: string;
+
+  // Uploads
+  uploads: UploadedFile[];
+
+  // Academic report capture (manual entry for now)
+  subjectMarks: SubjectMark[];
+  averageMark: number;
+
   status: 'Pending' | 'Reviewed' | 'Accepted' | 'Rejected';
   submittedDate: string;
 }
@@ -112,24 +156,44 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
+function padNumber(num: number, length: number) {
+  return num.toString().padStart(length, '0');
+}
+
+export function generateStudentNumber(year: string): string {
+  // Example: 2027-000123
+  const key = `admin_student_counter_${year}`;
+  const current = Number(localStorage.getItem(key) || '0');
+  const next = current + 1;
+  localStorage.setItem(key, String(next));
+  return `${year}-${padNumber(next, 6)}`;
+}
+
+export function calculateAverageMark(subjectMarks: SubjectMark[]): number {
+  if (!subjectMarks || subjectMarks.length === 0) return 0;
+  const total = subjectMarks.reduce((sum, s) => sum + (Number.isFinite(s.mark) ? s.mark : 0), 0);
+  return Math.round((total / subjectMarks.length) * 10) / 10;
+}
+
 // News
 const defaultNews: NewsItem[] = [
   {
     id: '1',
     title: '2026 Admissions',
     date: 'March 2026',
-    content: 'Admissions enquiries can be directed to the school office. Application requirements will be published here as they are confirmed.',
-    image: ''
+    content:
+      'Admissions enquiries can be directed to the school office. Application requirements will be published here as they are confirmed.',
+    image: '',
   },
   {
     id: '2',
     title: 'Matric Certificates',
     date: 'January 2026',
     content: 'NSC (Matric) certificates are available for collection at the school office. Please bring identification.',
-    image: ''
-  }
+    image: '',
+  },
 ];
-export const getNews = () => getItems<NewsItem>('admin_news').length ? getItems<NewsItem>('admin_news') : defaultNews;
+export const getNews = () => (getItems<NewsItem>('admin_news').length ? getItems<NewsItem>('admin_news') : defaultNews);
 export const setNews = (items: NewsItem[]) => setItems('admin_news', items);
 
 // Documents
@@ -157,13 +221,13 @@ const defaultAbout: AboutInfo = {
   historyParagraphs: [
     'Mount Hargreaves Senior Secondary School is a public boarding school serving learners in and around Sigoga Location (Matatiele, Eastern Cape).',
     'The school is committed to disciplined learning, community values, and strong academic outcomes.',
-    'Parents and guardians are encouraged to engage with the school through meetings, events, and ongoing learner support.'
+    'Parents and guardians are encouraged to engage with the school through meetings, events, and ongoing learner support.',
   ],
   principalName: 'Ms Ngozwana',
   principalTitle: 'Principal',
   principalMessage: [
     'Welcome to Mount Hargreaves Senior Secondary School. We believe every learner can achieve with consistent effort, good support, and a strong learning environment.',
-    'We value respect, responsibility, and pride in our school community. Together we can build a culture of achievement.'
+    'We value respect, responsibility, and pride in our school community. Together we can build a culture of achievement.',
   ],
 };
 export const getAbout = () => getObject<AboutInfo>('admin_about', defaultAbout);
@@ -175,9 +239,9 @@ const defaultActivities: Activity[] = [
   { id: '2', name: 'Netball', category: 'Sport', description: 'Competitive teams across age groups.', image: '' },
   { id: '3', name: 'Athletics', category: 'Sport', description: 'Track and field development and competition.', image: '' },
   { id: '4', name: 'Debating', category: 'Academic', description: 'Building critical thinking and communication skills.', image: '' },
-  { id: '5', name: 'Choir', category: 'Culture', description: 'Music and performance for school events and competitions.', image: '' }
+  { id: '5', name: 'Choir', category: 'Culture', description: 'Music and performance for school events and competitions.', image: '' },
 ];
-export const getActivities = () => getItems<Activity>('admin_activities').length ? getItems<Activity>('admin_activities') : defaultActivities;
+export const getActivities = () => (getItems<Activity>('admin_activities').length ? getItems<Activity>('admin_activities') : defaultActivities);
 export const setActivities = (items: Activity[]) => setItems('admin_activities', items);
 
 // Achievers by year
@@ -190,16 +254,49 @@ const defaultHall: HallOfFameEntry[] = [
   { id: '2', name: 'Top Achiever 2', title: 'Top Achiever', year: '2025', desc: '', image: '' },
   { id: '3', name: 'Top Achiever 3', title: 'Top Achiever', year: '2025', desc: '', image: '' },
 ];
-export const getHallOfFame = () => getItems<HallOfFameEntry>('admin_hall_of_fame').length ? getItems<HallOfFameEntry>('admin_hall_of_fame') : defaultHall;
+export const getHallOfFame = () =>
+  getItems<HallOfFameEntry>('admin_hall_of_fame').length ? getItems<HallOfFameEntry>('admin_hall_of_fame') : defaultHall;
 export const setHallOfFame = (items: HallOfFameEntry[]) => setItems('admin_hall_of_fame', items);
 
 // Results by year
 const defaultResults: Record<string, YearResults> = {
-  '2025': { overall: 89.9, bachelor: 206, bachelorRate: 71.8, distinctions: 451, wrote: 287, subjects: [{ subject: 'Accounting', rate: 90.6 }, { subject: 'Mathematics', rate: 71.1 }, { subject: 'Physical Sciences', rate: 82.1 }] },
-  '2024': { overall: 94.0, bachelor: 0, bachelorRate: 0, distinctions: 0, wrote: 0, subjects: [{ subject: 'English FAL', rate: 100 }, { subject: 'Life Orientation', rate: 100 }] },
-  '2023': { overall: 92.1, bachelor: 0, bachelorRate: 0, distinctions: 0, wrote: 0, subjects: [{ subject: 'Life Orientation', rate: 100 }, { subject: 'Geography', rate: 93.5 }] }
+  '2025': {
+    overall: 89.9,
+    bachelor: 206,
+    bachelorRate: 71.8,
+    distinctions: 451,
+    wrote: 287,
+    subjects: [
+      { subject: 'Accounting', rate: 90.6 },
+      { subject: 'Mathematics', rate: 71.1 },
+      { subject: 'Physical Sciences', rate: 82.1 },
+    ],
+  },
+  '2024': {
+    overall: 94.0,
+    bachelor: 0,
+    bachelorRate: 0,
+    distinctions: 0,
+    wrote: 0,
+    subjects: [
+      { subject: 'English FAL', rate: 100 },
+      { subject: 'Life Orientation', rate: 100 },
+    ],
+  },
+  '2023': {
+    overall: 92.1,
+    bachelor: 0,
+    bachelorRate: 0,
+    distinctions: 0,
+    wrote: 0,
+    subjects: [
+      { subject: 'Life Orientation', rate: 100 },
+      { subject: 'Geography', rate: 93.5 },
+    ],
+  },
 };
-export const getResultsByYear = (year: string) => getObject<YearResults | null>(`admin_results_${year}`, defaultResults[year] || null);
+export const getResultsByYear = (year: string) =>
+  getObject<YearResults | null>(`admin_results_${year}`, defaultResults[year] || null);
 export const setResultsByYear = (year: string, data: YearResults) => setObject(`admin_results_${year}`, data);
 
 // Auth
