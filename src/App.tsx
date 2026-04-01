@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Hero } from './components/Hero';
 import { NewsSection } from './components/NewsSection';
+import { ChatbotWidget } from './components/ChatbotWidget';
 import { Home } from './pages/Home';
 import { About } from './pages/About';
 import { Documents } from './pages/Documents';
@@ -71,6 +72,8 @@ export default function App() {
           <Route path="contact" element={<ContactEditor />} />
         </Route>
       </Routes>
+
+      <ChatbotWidget />
     </Router>
   );
 }
