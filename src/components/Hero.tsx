@@ -33,10 +33,10 @@ export const Hero = () => {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial= opacity: 0, scale: 1.02 
-          animate= opacity: 1, scale: 1 
-          exit= opacity: 0, scale: 0.98 
-          transition= duration: 0.9, ease: 'easeOut' 
+          initial={{ opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.9, ease: 'easeOut' }}
           className="absolute inset-0"
         >
           {showImage ? (
@@ -62,10 +62,10 @@ export const Hero = () => {
 
           <div className="absolute bottom-20 left-0 right-0 text-center z-20">
             <motion.p
-              initial= opacity: 0, y: 10 
-              animate= opacity: 1, y: 0 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               key={`caption-${currentIndex}`}
-              transition= duration: 0.35, ease: 'easeOut' 
+              transition={{ duration: 0.35, ease: 'easeOut' }}
               className="text-white/85 text-lg md:text-xl font-medium tracking-wide uppercase"
             >
               {slide.caption}
@@ -76,25 +76,25 @@ export const Hero = () => {
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4">
         <motion.h1
-          initial= opacity: 0, y: 10 
-          animate= opacity: 1, y: 0 
-          transition= duration: 0.45, ease: 'easeOut' 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
           className="text-4xl md:text-6xl font-bold mb-4 uppercase"
         >
           Mount Hargreaves SSS
         </motion.h1>
         <motion.p
-          initial= opacity: 0, y: 10 
-          animate= opacity: 1, y: 0 
-          transition= duration: 0.55, delay: 0.05, ease: 'easeOut' 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.05, ease: 'easeOut' }}
           className="text-lg md:text-2xl font-light italic"
         >
           "Strive for excellence"
         </motion.p>
         <motion.div
-          initial= opacity: 0, y: 10 
-          animate= opacity: 1, y: 0 
-          transition= duration: 0.6, delay: 0.1, ease: 'easeOut' 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
           className="mt-8 flex gap-4"
         >
           <a href="/admissions" className="btn-primary bg-white text-school-green hover:bg-gray-100">
