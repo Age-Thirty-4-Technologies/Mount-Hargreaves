@@ -108,7 +108,7 @@ export const Achievements = () => {
             {hallOfFame.slice(0, 8).map((student, idx) => (
               <motion.div
                 key={student.id || idx}
-                whileHover= scale: 1.02 
+                whileHover={{ scale: 1.02 }}
                 className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
               >
                 <StudentAvatar image={student.image} name={student.name} year={student.year} />
@@ -147,10 +147,10 @@ export const Achievements = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeResultsYear}
-              initial= opacity: 0, y: 14 
-              animate= opacity: 1, y: 0 
-              exit= opacity: 0, y: -14 
-              transition= duration: 0.25 
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.25 }}
             >
               {!currentResults ? (
                 <div className="text-center py-16 sm:py-24 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
@@ -201,9 +201,9 @@ export const Achievements = () => {
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-2">
                             <motion.div
-                              initial= width: 0 
+                              initial={{ width: 0 }}
                               animate={{ width: `${stat.rate}%` }}
-                              transition= duration: 0.45 
+                              transition={{ duration: 0.45 }}
                               className="bg-school-green h-2 rounded-full"
                             />
                           </div>
@@ -244,10 +244,10 @@ export const Achievements = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeAchieversYear}
-              initial= opacity: 0, y: 14 
-              animate= opacity: 1, y: 0 
-              exit= opacity: 0, y: -14 
-              transition= duration: 0.25 
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.25 }}
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8"
             >
               {achieversByYear[activeAchieversYear] && achieversByYear[activeAchieversYear].length > 0 ? (
