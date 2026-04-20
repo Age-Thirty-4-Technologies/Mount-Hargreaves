@@ -373,17 +373,7 @@ export const Admissions = () => {
         },
         siblingInfo: {
           numberOfOtherChildrenAtSchool: siblings.numberOfOtherChildrenAtSchool,
-          siblings: [
-            siblings.sibling1Name
-              ? { name: siblings.sibling1Name, grade: siblings.sibling1Grade, positionInFamily: siblings.positionInFamily }
-              : null,
-            siblings.sibling2Name
-              ? { name: siblings.sibling2Name, grade: siblings.sibling2Grade, positionInFamily: siblings.positionInFamily }
-              : null,
-            siblings.sibling3Name
-              ? { name: siblings.sibling3Name, grade: siblings.sibling3Grade, positionInFamily: siblings.positionInFamily }
-              : null,
-          ].filter(Boolean) as any,
+          siblings: [],
         },
         parentGuardian1: parent1 as any,
         parentGuardian2: hasSecondParent ? (parent2 as any) : undefined,
