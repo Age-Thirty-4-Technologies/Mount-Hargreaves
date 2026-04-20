@@ -236,7 +236,6 @@ export const Admissions = () => {
   }, [files]);
 
   const validateStep = () => {
-    // Keep validation light but enforce essentials
     if (step === 1) {
       if (!learner.firstName || !learner.lastName || !learner.dob || !learner.gender) {
         setError('Please complete learner particulars (name, date of birth, and gender).');
