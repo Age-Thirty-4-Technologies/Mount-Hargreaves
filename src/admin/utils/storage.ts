@@ -31,10 +31,102 @@ export type SubjectMark = {
   mark: number; // 0-100
 };
 
+export type LearnerContact = {
+  homeTelephone?: string;
+  emergencyTelephone?: string;
+  learnerCell?: string;
+  learnerEmail?: string;
+};
+
+export type LearnerParticulars = {
+  initials?: string;
+  otherNames?: string;
+  identificationNumber?: string; // ID / Passport
+  citizenship?: string;
+  race?: string;
+  homeLanguage?: string;
+  physicalAddress?: string;
+  citySuburb?: string;
+  postalCode?: string;
+  isBoarder?: 'Yes' | 'No';
+  modeOfTransport?: string;
+  deceasedParent?: 'Mother' | 'Father' | 'Both' | 'None';
+  religion?: string;
+  accessionNo?: string;
+  highestGradePassed?: string;
+  yearWhenGradeWasPassed?: string;
+};
+
+export type PreviousSchoolInfo = {
+  name?: string;
+  address?: string;
+  code?: string;
+  province?: string;
+  country?: string;
+};
+
+export type LearnerMedicalInfo = {
+  medicalAidNumber?: string;
+  medicalAidName?: string;
+  medicalAidMainMember?: string;
+  doctorName?: string;
+  doctorTelephoneNumber?: string;
+  doctorAddress?: string;
+  medicalCondition?: string;
+  specialProblemsRequiringCounselling?: string;
+  dexterity?: 'Right Handed' | 'Left Handed' | 'Ambidextrous';
+  socialGrant?: { reg?: 'Yes' | 'No'; rec?: 'Yes' | 'No' };
+};
+
+export type SiblingInfo = {
+  numberOfOtherChildrenAtSchool?: string;
+  siblings?: Array<{ name: string; grade: string; positionInFamily?: string }>;
+};
+
+export type ParentGuardian = {
+  title?: string;
+  initials?: string;
+  firstName?: string;
+  surname?: string;
+  gender?: string;
+  race?: string;
+  homeLanguage?: string;
+  identificationNumber?: string; // ID / Passport
+  accountPayer?: 'Yes' | 'No';
+  residentialStreetAddress?: string;
+  citySuburb?: string;
+  code?: string;
+  employer?: string;
+  occupation?: string;
+  surnameOfSpouse?: string;
+  occupationOfSpouse?: string;
+  spouseIdNumber?: string;
+  learnerResidesWithThisParent?: 'Yes' | 'No';
+  relationshipToLearner?: string;
+  maritalStatusOfParent?: string;
+};
+
+export type CorrespondenceDetails = {
+  title?: string;
+  surname?: string;
+  postalAddress?: string;
+};
+
+export type OtherContactDetails = {
+  homeTelephone?: string;
+  faxNumber?: string;
+  spouseWorkTelephoneNumber?: string;
+  emailAddress?: string;
+  workTelephone?: string;
+  cellNumber?: string;
+  spouseCellNumber?: string;
+  spouseEmailAddress?: string;
+};
+
 export interface Application {
   id: string;
 
-  // Learner
+  // Learner (minimum)
   firstName: string;
   lastName: string;
   dob: string;
@@ -45,22 +137,33 @@ export interface Application {
   // Generated
   studentNumber: string;
 
-  // Parent / Guardian
+  // Legacy parent/guardian fields (keep for backward compatibility)
   guardianName: string;
   guardianRelationship?: string;
   guardianPhone: string;
   guardianEmail: string;
 
-  // Address
+  // Address (legacy)
   address: string;
   locality: string;
 
-  // School history
+  // School history (legacy)
   previousSchool: string;
   lastGradeCompleted?: string;
 
-  // Notes
+  // Notes (legacy)
   medicalInfo?: string;
+
+  // New structured fields
+  learner?: LearnerParticulars;
+  learnerContact?: LearnerContact;
+  previousSchoolInfo?: PreviousSchoolInfo;
+  learnerMedicalInfo?: LearnerMedicalInfo;
+  siblingInfo?: SiblingInfo;
+  parentGuardian1?: ParentGuardian;
+  parentGuardian2?: ParentGuardian;
+  correspondenceDetails?: CorrespondenceDetails;
+  otherContactDetails?: OtherContactDetails;
 
   // Boarding
   applicationType: 'General' | 'Boarding';
