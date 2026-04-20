@@ -448,11 +448,6 @@ export const Admissions = () => {
           <div className="bg-school-green p-8 text-white">
             <h2 className="text-2xl font-bold mb-2">Application for admission to school</h2>
             <p className="text-white/80">Please complete the form below. You can move between sections using Next / Back.</p>
-            <div className="mt-6 flex flex-wrap gap-6">
-              <SectionPill index={1} label="Learner" active={step === 1} />
-              <SectionPill index={2} label="Siblings" active={step === 2} />
-              <SectionPill index={3} label="Parent/Guardian" active={step === 3} />
-            </div>
           </div>
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
             {/* (rest of form unchanged from previous version) */}
