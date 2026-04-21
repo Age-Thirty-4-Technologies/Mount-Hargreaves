@@ -324,60 +324,6 @@ export const Admissions = () => {
         previousSchool: previousSchoolInfo.name.trim(),
         lastGradeCompleted: learner.highestGradePassed.trim(),
         medicalInfo: medical.medicalCondition.trim() || medical.specialProblemsRequiringCounselling.trim(),
-        learner: {
-          initials: learner.initials,
-          otherNames: learner.otherNames,
-          identificationNumber: learner.identificationNumber,
-          citizenship: learner.citizenship,
-          race: learner.race,
-          homeLanguage: learner.homeLanguage,
-          physicalAddress: learner.physicalAddress,
-          citySuburb: learner.citySuburb,
-          postalCode: learner.postalCode,
-          isBoarder: learner.isBoarder as any,
-          modeOfTransport: learner.modeOfTransport,
-          deceasedParent: learner.deceasedParent as any,
-          religion: learner.religion,
-          accessionNo: learner.accessionNo,
-          highestGradePassed: learner.highestGradePassed,
-          yearWhenGradeWasPassed: learner.yearWhenGradeWasPassed,
-        },
-        learnerContact: {
-          homeTelephone: learner.homeTelephone,
-          emergencyTelephone: learner.emergencyTelephone,
-          learnerCell: learner.learnerCell,
-          learnerEmail: learner.learnerEmail,
-        },
-        previousSchoolInfo: {
-          name: previousSchoolInfo.name,
-          address: previousSchoolInfo.address,
-          code: previousSchoolInfo.code,
-          province: previousSchoolInfo.province,
-          country: previousSchoolInfo.country,
-        },
-        learnerMedicalInfo: {
-          medicalAidNumber: medical.medicalAidNumber,
-          medicalAidName: medical.medicalAidName,
-          medicalAidMainMember: medical.medicalAidMainMember,
-          doctorName: medical.doctorName,
-          doctorTelephoneNumber: medical.doctorTelephoneNumber,
-          doctorAddress: medical.doctorAddress,
-          medicalCondition: medical.medicalCondition,
-          specialProblemsRequiringCounselling: medical.specialProblemsRequiringCounselling,
-          dexterity: medical.dexterity as any,
-          socialGrant: {
-            reg: medical.socialGrantReg as any,
-            rec: medical.socialGrantRec as any,
-          },
-        },
-        siblingInfo: {
-          numberOfOtherChildrenAtSchool: siblings.numberOfOtherChildrenAtSchool,
-          siblings: [],
-        },
-        parentGuardian1: parent1 as any,
-        parentGuardian2: hasSecondParent ? (parent2 as any) : undefined,
-        correspondenceDetails: correspondence as any,
-        otherContactDetails: otherContact as any,
         applicationType: 'General',
         uploads,
         subjectMarks: [],
@@ -422,6 +368,7 @@ export const Admissions = () => {
     <div className="py-12 sm:py-16 bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="section-title">General Application</h1>
+
         <div className="mb-8 bg-white border border-gray-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="font-bold text-gray-900">Need boarding accommodation?</div>
@@ -433,15 +380,24 @@ export const Admissions = () => {
             <BedDouble size={18} /> Boarding application
           </a>
         </div>
+
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
           <div className="bg-school-green p-8 text-white">
             <h2 className="text-2xl font-bold mb-2">Application for admission to school</h2>
             <p className="text-white/80">Please complete the form below. You can move between sections using Next / Back.</p>
+
+            <div className="mt-6 flex flex-wrap gap-6">
+              <SectionPill index={1} label="Learner" active={step === 1} />
+              <SectionPill index={2} label="Siblings" active={step === 2} />
+              <SectionPill index={3} label="Parent/Guardian" active={step === 3} />
+            </div>
           </div>
+
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
             {/* (rest of form unchanged from previous version) */}
           </form>
         </div>
+
         <p className="text-xs text-gray-500 mt-4">
           Note: Applications and uploads are saved in the school browser storage for this demo. For a real deployment,
           connect the staff portal to a database so staff can access submissions from any device.
