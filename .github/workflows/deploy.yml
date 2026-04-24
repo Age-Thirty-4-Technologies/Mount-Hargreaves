@@ -18,5 +18,5 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        # DirectAdmin stores files in this specific path
         server-dir: domains/mthargreavessss.co.za/public_html/
+        port: 21
