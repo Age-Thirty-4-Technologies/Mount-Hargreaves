@@ -1,22 +1,28 @@
-name: Deploy School Website
+name: 🚀 Deploy School Website
+
 on:
   push:
     branches:
-      - main  # or master
+      - main  # Change this to 'master' if your branch is named master
 
 jobs:
   web-deploy:
-    name: 🎉 Deploy
+    name: 🎉 Sync Files
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: 📂 Sync files to Server
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+    - name: 📂 Sync files to Host Africa
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: domains/mthargreavessss.co.za/public_html/
+        # Since the FTP user is set to 'Domain' level in DirectAdmin,
+        # it starts inside the domain folder, so we just enter public_html
+        server-dir: public_html/
         port: 21
+        protocol: ftp
+        # 'local-dir: ./' ensures all files from your GitHub repo are sent
+        local-dir: ./
