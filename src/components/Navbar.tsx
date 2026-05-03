@@ -29,16 +29,21 @@ export const Navbar = () => {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo + Name */}
-            <Link to="/" className="flex items-center gap-3 shrink-0">
-              <div className="h-11 w-11 rounded-xl bg-white flex items-center justify-center border border-gray-200 shadow-md overflow-hidden">
+            <Link to="/" className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="h-11 w-11 shrink-0 rounded-xl bg-white flex items-center justify-center border border-gray-200 shadow-md overflow-hidden">
                 <img
                   src="./assets/Copilot_20260418_114207.png"
                   alt="Mt Hargreaves SSS logo"
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div>
-                <span className="text-base font-bold text-school-green block leading-tight">
+              <div className="min-w-0">
+                {/* Mobile: short name */}
+                <span className="md:hidden text-sm font-bold text-school-green block leading-tight">
+                  Mt Hargreaves SSS
+                </span>
+                {/* Desktop: full name */}
+                <span className="hidden md:block text-base font-bold text-school-green leading-tight">
                   Mt Hargreaves Senior Secondary School
                 </span>
                 <span className="text-xs font-semibold text-gray-400 tracking-wide uppercase">
@@ -48,7 +53,7 @@ export const Navbar = () => {
             </Link>
 
             {/* Desktop: Student Portal button */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3 shrink-0">
               <Link
                 to="/student/login"
                 className={cn(
@@ -63,7 +68,7 @@ export const Navbar = () => {
             </div>
 
             {/* Mobile: hamburger */}
-            <div className="md:hidden flex items-center">
+            <div className="md:hidden flex items-center shrink-0 ml-2">
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="text-gray-600 hover:text-school-green p-2"
