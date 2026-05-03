@@ -7,6 +7,7 @@ import { NewsSection } from './components/NewsSection';
 import { ChatbotWidget } from './components/ChatbotWidget';
 import { Home } from './pages/Home';
 import { About } from './pages/About';
+import { Staff } from './pages/Staff';
 import { Documents } from './pages/Documents';
 import { Achievements } from './pages/Achievements';
 import { Sport } from './pages/Sport';
@@ -54,6 +55,7 @@ export default function App() {
         {/* Public routes */}
         <Route path="/" element={<PageShell><HomePage /></PageShell>} />
         <Route path="/about" element={<PageShell><About /></PageShell>} />
+        <Route path="/staff" element={<PageShell><Staff /></PageShell>} />
         <Route path="/documents" element={<PageShell><Documents /></PageShell>} />
         <Route path="/achievements" element={<PageShell><Achievements /></PageShell>} />
         <Route path="/sport" element={<PageShell><Sport /></PageShell>} />
