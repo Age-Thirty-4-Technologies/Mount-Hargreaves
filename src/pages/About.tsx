@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Quote, Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { getAbout, type AboutInfo } from '../admin/utils/storage';
 
 export const About = () => {
@@ -8,10 +8,8 @@ export const About = () => {
   const [campusFailed, setCampusFailed] = useState(false);
   const [principalFailed, setPrincipalFailed] = useState(false);
 
-  // Images live in:
-  // public/assets/about/
   const campusImageUrl = '/assets/about/d8d53f724e0b195658e83c643a6b491e.png';
-  const principalImageUrl = '/assets/about/principal.jpg';
+  const principalImageUrl = './assets/Staff/principal.jpg';
 
   useEffect(() => {
     setData(getAbout());
@@ -20,95 +18,131 @@ export const About = () => {
   return (
     <div className="py-12 sm:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Page Title */}
         <h1 className="section-title">About Mount Hargreaves SSS</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center mb-16 sm:mb-24">
+        {/* ── Section 1: Our School + Campus Image ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-stretch mb-16 sm:mb-24">
+
+          {/* Text */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
             viewport={{ once: true }}
+            className="flex flex-col justify-center"
           >
-            <h2 className="text-2xl font-bold text-school-green mb-6">Our School</h2>
-            <div className="space-y-4 text-gray-600 leading-relaxed">
+            <div className="border-l-4 border-[#c9a84c] pl-5 mb-6">
+              <h2 className="text-2xl font-bold text-[#0f1f4b]">Our School</h2>
+            </div>
+            <div className="space-y-4 text-gray-600 leading-relaxed text-base">
               {data.historyParagraphs.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
             </div>
           </motion.div>
 
+          {/* Campus Image */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.05 }}
             viewport={{ once: true }}
-            className="rounded-2xl overflow-hidden shadow-2xl"
+            className="rounded-2xl overflow-hidden shadow-2xl border-4 border-[#eef0f7] h-[280px] sm:h-[360px]"
           >
             {!campusFailed ? (
               <img
                 src={campusImageUrl}
                 alt="School campus"
-                className="w-full h-[260px] sm:h-[340px] object-cover"
+                className="w-full h-full object-cover"
                 onError={() => setCampusFailed(true)}
               />
             ) : (
-              <div className="w-full h-[260px] sm:h-[340px] bg-gradient-to-br from-school-green via-[#0B2A57] to-[#081529] flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-[#0f1f4b] via-[#1a3a7a] to-[#0f1f4b] flex items-center justify-center">
                 <div className="text-center text-white/70 px-6">
                   <div className="mx-auto mb-3 w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/15">
                     <ImageIcon />
                   </div>
-                  <div className="font-semibold">Campus image placeholder</div>
-                  <div className="text-sm text-white/60">Add images to <span className="font-mono">public/assets/about/</span></div>
+                  <div className="font-semibold">Campus image</div>
+                  <div className="text-sm text-white/60 font-mono">public/assets/about/</div>
                 </div>
               </div>
             )}
           </motion.div>
         </div>
 
-        <section className="bg-gray-50 rounded-3xl p-6 sm:p-10 md:p-12 mb-16 sm:mb-24 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 text-school-green/10">
-            <Quote size={120} />
+        {/* ── Section 2: Principal's Message ── */}
+        <motion.section
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          viewport={{ once: true }}
+          className="mb-16 sm:mb-24"
+        >
+          {/* Section heading */}
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-extrabold text-[#0f1f4b] mb-2">Principal's Message</h2>
+            <div className="w-16 h-1 bg-[#c9a84c] mx-auto rounded-full" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 items-center">
-            <div className="col-span-1">
-              <div className="aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white">
-                {!principalFailed ? (
-                  <img
-                    src={principalImageUrl}
-                    alt="Principal"
-                    className="w-full h-full object-cover object-top"
-                    onError={() => setPrincipalFailed(true)}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-white">
-                    <div className="text-center px-6 text-gray-500">
-                      <div className="mx-auto mb-3 w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center border border-gray-200">
-                        <ImageIcon />
-                      </div>
-                      <div className="font-semibold">Principal image placeholder</div>
-                      <div className="text-sm">Add <span className="font-mono">public/assets/about/principal.jpg</span></div>
+          {/* Card */}
+          <div className="bg-[#f4f6fb] rounded-3xl overflow-hidden shadow-lg border border-[#dde3f0]">
+            <div className="grid grid-cols-1 md:grid-cols-3">
+
+              {/* Principal Photo Column */}
+              <div className="flex flex-col items-center justify-center bg-[#0f1f4b] p-8 md:p-10">
+                {/* Photo frame */}
+                <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-[#c9a84c] shadow-xl mb-5">
+                  {!principalFailed ? (
+                    <img
+                      src={principalImageUrl}
+                      alt="Principal"
+                      className="w-full h-full object-cover object-top"
+                      onError={() => setPrincipalFailed(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#1a2e5a]">
+                      <ImageIcon className="text-white/40" size={40} />
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Name & Title */}
+                <h3 className="text-lg font-bold text-white text-center leading-tight">
+                  {data.principalName}
+                </h3>
+                <p className="text-[#c9a84c] text-sm font-semibold mt-1 text-center">
+                  {data.principalTitle}
+                </p>
+
+                {/* Decorative divider */}
+                <div className="w-10 h-0.5 bg-[#c9a84c] mt-4 rounded-full opacity-60" />
               </div>
 
-              <div className="mt-4 text-center">
-                <h3 className="text-xl font-bold text-school-green">{data.principalName}</h3>
-                <p className="text-gray-500">{data.principalTitle}</p>
-              </div>
-            </div>
+              {/* Message Column */}
+              <div className="col-span-2 flex flex-col justify-center p-8 md:p-12">
+                {/* Opening quote mark — decorative only, not wrapping text */}
+                <div className="text-[#c9a84c] text-6xl font-serif leading-none mb-2 opacity-40 select-none">
+                  "
+                </div>
 
-            <div className="col-span-2">
-              <h2 className="text-2xl sm:text-3xl font-bold text-school-green mb-6 italic">Principal's Message</h2>
-              <div className="space-y-4 text-gray-700 text-base sm:text-lg leading-relaxed">
-                {data.principalMessage.map((p, i) => (
-                  <p key={i}>"{p}"</p>
-                ))}
+                <div className="space-y-4 text-gray-700 text-base sm:text-lg leading-relaxed">
+                  {data.principalMessage.map((p, i) => (
+                    <p key={i}>{p}</p>
+                  ))}
+                </div>
+
+                {/* Closing quote mark — decorative only */}
+                <div className="text-[#c9a84c] text-6xl font-serif leading-none mt-2 text-right opacity-40 select-none">
+                  "
+                </div>
               </div>
+
             </div>
           </div>
-        </section>
+        </motion.section>
+
       </div>
     </div>
   );
