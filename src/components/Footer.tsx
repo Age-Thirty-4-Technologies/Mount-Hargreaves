@@ -55,7 +55,7 @@ export const Footer = () => {
                 aria-label="Facebook"
               >
                 <Facebook size={18} />
-              </Link>
+              </a>
               <a
                 href="https://www.tiktok.com/@mt.hargreavessss"
                 target="_blank"
@@ -64,7 +64,7 @@ export const Footer = () => {
                 aria-label="TikTok"
               >
                 <TikTokIcon size={18} />
-              </Link>
+              </a>
             </div>
           </div>
 
