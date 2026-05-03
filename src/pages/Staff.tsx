@@ -43,14 +43,14 @@ const staffData: StaffMember[] = [
   { name: 'Ms. T. Sefadi', position: 'Learner Support Agent', category: 'Support Staff' },
 
   // Hostel Staff
-  { name: 'Mr. Lupalule M', position: 'Senior Housekeeping Supervisor', category: 'Hostel Staff', image: './assets/Staff/Mr_M_Lupalule.jpg' },
-  { name: 'Ms. Jokozela ZF', position: 'Senior Housekeeping Supervisor', category: 'Hostel Staff', image: './assets/Staff/Ms_ZF_Jokozela.jpg' },
-  { name: 'Mrs. Msizi AG', position: 'General Worker', category: 'Hostel Staff', image: './assets/Staff/Mrs AG Msizi.jpg' },
-  { name: 'Mrs. Damane N', position: 'General Worker', category: 'Hostel Staff', image: './assets/Staff/Mrs_N_Damane.jpg' },
-  { name: 'Miss Tshongwe SM', position: 'Food Aid Service', category: 'Hostel Staff', image: './assets/Staff/Miss SM Tshongwe.jpg' },
-  { name: 'Mrs. Skolo NA', position: 'Food Aid Service', category: 'Hostel Staff', image: './assets/Staff/Mrs NA Skolo.jpg' },
-  { name: 'Mr. Msizi L', position: 'General Worker', category: 'Hostel Staff', image: './assets/Staff/Mr Le Msizi.jpg' },
-  { name: 'Ms. Peane KF', position: 'Hostel Administration Clerk', category: 'Hostel Staff', image: './assets/Staff/Ms KN Pheane.jpg' },
+  { name: 'Ms. KF Peane', position: 'Hostel Administration Clerk', category: 'Hostel Staff', image: './assets/Staff/Ms KN Pheane.jpg' },
+  { name: 'Mr. M Lupalule', position: 'Senior Housekeeping Supervisor', category: 'Hostel Staff', image: './assets/Staff/Mr_M_Lupalule.jpg' },
+  { name: 'Ms. ZF Jokozela', position: 'Senior Housekeeping Supervisor', category: 'Hostel Staff', image: './assets/Staff/Ms_ZF_Jokozela.jpg' },
+  { name: 'Mrs. AG Msizi', position: 'General Worker', category: 'Hostel Staff', image: './assets/Staff/Mrs AG Msizi.jpg' },
+  { name: 'Mrs. N Damane', position: 'General Worker', category: 'Hostel Staff', image: './assets/Staff/Mrs_N_Damane.jpg' },
+  { name: 'Miss SM Tshongwe', position: 'Food Aid Service', category: 'Hostel Staff', image: './assets/Staff/Miss SM Tshongwe.jpg' },
+  { name: 'Mrs. NA Skolo', position: 'Food Aid Service', category: 'Hostel Staff', image: './assets/Staff/Mrs NA Skolo.jpg' },
+  { name: 'Mr. L Msizi', position: 'General Worker', category: 'Hostel Staff', image: './assets/Staff/Mr Le Msizi.jpg' },
 ];
 
 const categories = [
