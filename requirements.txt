@@ -1,1 +1,3 @@
-qq
+azure-functions
+openai
+
