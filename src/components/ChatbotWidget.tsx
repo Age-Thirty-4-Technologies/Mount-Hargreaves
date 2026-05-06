@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageCircle, X, Send, Globe, ChevronDown } from 'lucide-react';
 import { getApplications, type Application } from '../admin/utils/storage';
 
@@ -27,6 +27,13 @@ const VULAVULA_LANG_MAP: Record<SupportedLang, string> = {
   xho: 'xho_Latn',
   sot: 'sot_Latn',
 };
+
+const QUICK_QUESTIONS = [
+  'How do I apply for admission?',
+  'What documents do I need?',
+  'Is boarding available?',
+  'What are the school hours?',
+];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function uid() {
@@ -87,9 +94,11 @@ async function detectLanguage(text: string): Promise<SupportedLang> {
       headers: { 'Content-Type': 'application/json', 'X-CLIENT-TOKEN': vulavulaKey },
       body: JSON.stringify({ text }),
     });
+
     if (!res.ok) return 'eng';
     const data = await res.json();
     const detected = data?.predicted_label?.toLowerCase() ?? 'eng';
+
     if (detected.includes('zul')) return 'zul';
     if (detected.includes('xho')) return 'xho';
     if (detected.includes('sot')) return 'sot';
@@ -119,6 +128,7 @@ async function translateText(
         target_lang: VULAVULA_LANG_MAP[targetLang],
       }),
     });
+
     if (!res.ok) return text;
     const data = await res.json();
     return data?.translation ?? text;
@@ -127,10 +137,11 @@ async function translateText(
   }
 }
 
-// ── Gemini: get AI answer ────────────────────────────────────────────────────
+// ── Gemini: get AI answer (with model fallback) ──────────────────────────────
 async function askGemini(userMessage: string): Promise<string> {
   const apiKey = (process.env.GEMINI_API_KEY as string) || '';
   if (!apiKey) {
+    console.error('GEMINI_API_KEY is missing');
     return "I'm sorry, I'm not configured correctly. Please contact the school directly.";
   }
 
@@ -157,44 +168,41 @@ School details:
 
 Keep answers friendly, helpful and concise. If you don't know something specific, direct them to contact the school directly.`;
 
-  try {
-    // Use the stable Gemini 1.5 Flash endpoint
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ parts: [{ text: userMessage }], role: 'user' }],
-          generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
-        }),
+  // Try stable model first, then fall back to experimental
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ parts: [{ text: userMessage }], role: 'user' }],
+            generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        console.warn(`Gemini model ${model} returned HTTP ${res.status}, trying next...`);
+        continue;
       }
-    );
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('Gemini API error:', res.status, errText);
-      throw new Error(`Gemini error: ${res.status}`);
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+
+      console.warn(`Gemini model ${model} returned empty content, trying next...`);
+    } catch (err) {
+      console.warn(`Gemini model ${model} threw an error:`, err);
     }
-
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('Empty response from Gemini');
-    return text;
-  } catch (err) {
-    console.error('Gemini request failed:', err);
-    return "I'm having trouble connecting right now. Please contact the school at +27 76 707 3212 or office@mounthargreavesss.co.za.";
   }
-}
 
-// ── Suggested quick questions ────────────────────────────────────────────────
-const QUICK_QUESTIONS = [
-  'How do I apply for admission?',
-  'What documents do I need?',
-  'Is boarding available?',
-  'What are the school hours?',
-];
+  return "I'm having trouble connecting right now. Please contact the school at +27 76 707 3212 or office@mounthargreavesss.co.za.";
+}
 
 // ── Main ChatbotWidget ───────────────────────────────────────────────────────
 export function ChatbotWidget(props: { defaultOpen?: boolean }) {
@@ -202,7 +210,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [currentLang, setCurrentLang] = useState<SupportedLang>('eng');
-  const [showLangs, setShowLangs] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: uid(),
@@ -214,31 +222,46 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
 
   const endRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const langMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
-  // Focus input when opened
+  // Auto-focus input when chat opens
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 150);
   }, [open]);
 
-  // Escape key to close
+  // Keyboard: Escape closes lang menu first, then chat
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        if (showLangMenu) setShowLangMenu(false);
+        else setOpen(false);
+      }
     }
     if (open) window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open]);
+  }, [open, showLangMenu]);
+
+  // Close lang menu when clicking outside
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+        setShowLangMenu(false);
+      }
+    }
+    if (showLangMenu) document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [showLangMenu]);
 
   const apps = useMemo(() => {
     try { return getApplications(); } catch { return []; }
   }, [open]);
+
+  const showQuickQuestions = messages.length <= 1 && !isTyping;
 
   async function send(textOverride?: string) {
     const text = (textOverride ?? input).trim();
@@ -250,19 +273,19 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
     setIsTyping(true);
 
     try {
-      // 1. Check application status queries first
+      // 1. Application status lookup (no AI needed)
       const statusQ = parseStatusQuery(text);
       if (statusQ) {
         const app = findApplication(apps, statusQ);
         const replyText = app
           ? `I found the application for ${app.firstName} ${app.lastName} (Student number: ${app.studentNumber}). Status: ${app.status}.${app.submittedDate ? ` Submitted: ${formatDate(app.submittedDate)}.` : ''}`
-          : 'I could not find a matching application. Please double-check the student number or the learner name and date of birth.';
+          : 'I could not find a matching application on this device. Please double-check the student number or the learner name and date of birth.';
         setMessages((prev) => [...prev, { id: uid(), role: 'bot', text: replyText, createdAt: Date.now() }]);
         setIsTyping(false);
         return;
       }
 
-      // 2. Detect language
+      // 2. Detect language via Vulavula
       const detectedLang = await detectLanguage(text);
       setCurrentLang(detectedLang);
 
@@ -274,7 +297,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
       // 4. Ask Gemini in English
       const englishReply = await askGemini(englishText);
 
-      // 5. Translate reply back if needed
+      // 5. Translate reply back to user's language if needed
       const finalReply = detectedLang !== 'eng'
         ? await translateText(englishReply, 'eng', detectedLang)
         : englishReply;
@@ -304,59 +327,70 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
     }
   }
 
-  const showQuickQuestions = messages.length <= 1;
-
   return (
     <>
+      {/* Slide-up animation */}
+      <style>{`
+        @keyframes mh-chat-in {
+          from { opacity: 0; transform: translateY(14px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .mh-chat-window { animation: mh-chat-in 0.2s cubic-bezier(0.34, 1.1, 0.64, 1) both; }
+      `}</style>
+
       {/* ── Chat window ── */}
       {open && (
         <div
-          className="fixed z-50 bottom-20 right-4 sm:bottom-6 sm:right-6
-            w-[calc(100vw-2rem)] max-w-[380px]
-            h-[min(70vh,520px)]
+          className="mh-chat-window fixed z-50
+            bottom-[4.5rem] right-3
+            sm:bottom-24 sm:right-6
+            w-[calc(100vw-1.5rem)] max-w-[375px]
+            h-[min(70vh,540px)]
             bg-white rounded-2xl shadow-2xl border border-gray-200
-            flex flex-col overflow-hidden
-            animate-in"
-          style={{
-            animation: 'slideUp 0.2s ease-out',
-          }}
+            flex flex-col overflow-hidden"
           role="dialog"
           aria-label="School help desk chatbot"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-school-green text-white shrink-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <MessageCircle size={16} />
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-[10px] font-black shrink-0 select-none tracking-tight">
+                MH
               </div>
               <div className="min-w-0">
-                <div className="font-bold text-sm leading-tight">Mt Hargreaves Help Desk</div>
-                <div className="text-[11px] text-white/70 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-300 inline-block" />
-                  Online · Powered by Gemini AI
+                <div className="font-bold text-sm leading-tight truncate">Mt Hargreaves Help Desk</div>
+                <div className="flex items-center gap-1 text-[11px] text-white/70 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-300 inline-block animate-pulse" />
+                  Online · AI-powered
+                  {currentLang !== 'eng' && (
+                    <span className="ml-1">· {LANG_LABELS[currentLang]}</span>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              {/* Language selector button */}
-              <div className="relative">
+              {/* Language selector */}
+              <div className="relative" ref={langMenuRef}>
                 <button
-                  onClick={() => setShowLangs(!showLangs)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-xs font-medium"
-                  title="Change language"
+                  onClick={() => setShowLangMenu((v) => !v)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-xs font-semibold"
+                  aria-label="Change language"
                 >
-                  <Globe size={12} />
+                  <Globe size={11} />
                   <span>{LANG_LABELS[currentLang].split(' ')[0]}</span>
-                  <ChevronDown size={10} className={`transition-transform ${showLangs ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    size={10}
+                    className={`transition-transform duration-150 ${showLangMenu ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
-                {showLangs && (
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-10 min-w-[120px]">
+                {showLangMenu && (
+                  <div className="absolute right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-20 min-w-[130px]">
                     {(Object.entries(LANG_LABELS) as [SupportedLang, string][]).map(([code, label]) => (
                       <button
                         key={code}
-                        onClick={() => { setCurrentLang(code); setShowLangs(false); }}
+                        onClick={() => { setCurrentLang(code); setShowLangMenu(false); }}
                         className={`w-full text-left px-3 py-2 text-xs transition-colors ${
                           currentLang === code
                             ? 'bg-school-green text-white font-bold'
@@ -370,6 +404,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                 )}
               </div>
 
+              {/* Close */}
               <button
                 onClick={() => setOpen(false)}
                 className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -380,12 +415,15 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
             </div>
           </div>
 
-          {/* Messages area */}
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-gray-50 scroll-smooth">
             {messages.map((m) => (
-              <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                key={m.id}
+                className={`flex items-end gap-1.5 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+              >
                 {m.role === 'bot' && (
-                  <div className="w-6 h-6 rounded-full bg-school-green flex items-center justify-center text-white text-[10px] font-bold shrink-0 mr-2 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-school-green flex items-center justify-center text-white text-[8px] font-black shrink-0 mb-0.5">
                     MH
                   </div>
                 )}
@@ -398,7 +436,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                 >
                   {m.text}
                   {m.detectedLang && (
-                    <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                    <div className="text-[10px] text-white/60 mt-1 flex items-center gap-1">
                       <Globe size={9} /> Detected: {m.detectedLang}
                     </div>
                   )}
@@ -408,8 +446,8 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
 
             {/* Typing indicator */}
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="w-6 h-6 rounded-full bg-school-green flex items-center justify-center text-white text-[10px] font-bold shrink-0 mr-2 mt-0.5">
+              <div className="flex items-end gap-1.5">
+                <div className="w-5 h-5 rounded-full bg-school-green flex items-center justify-center text-white text-[8px] font-black shrink-0">
                   MH
                 </div>
                 <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex gap-1 items-center">
@@ -420,16 +458,16 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
               </div>
             )}
 
-            {/* Quick question chips */}
-            {showQuickQuestions && !isTyping && (
+            {/* Quick question chips — only before conversation starts */}
+            {showQuickQuestions && (
               <div className="pt-1">
-                <p className="text-[11px] text-gray-400 font-medium mb-2 text-center">Quick questions:</p>
+                <p className="text-[11px] text-gray-400 text-center mb-2">Quick questions:</p>
                 <div className="flex flex-wrap gap-1.5 justify-center">
                   {QUICK_QUESTIONS.map((q) => (
                     <button
                       key={q}
                       onClick={() => send(q)}
-                      className="text-[11px] px-2.5 py-1 rounded-full bg-white border border-school-green/30 text-school-green hover:bg-school-green hover:text-white transition-colors font-medium"
+                      className="text-[11px] px-2.5 py-1 rounded-full bg-white border border-school-green/25 text-school-green hover:bg-school-green hover:text-white transition-colors font-medium shadow-sm"
                     >
                       {q}
                     </button>
@@ -441,15 +479,17 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
             <div ref={endRef} />
           </div>
 
-          {/* Input area */}
+          {/* Input */}
           <div className="p-3 bg-white border-t border-gray-100 shrink-0">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-school-green/20 focus:border-school-green transition-all bg-gray-50 placeholder:text-gray-400"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+                }}
+                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-school-green/20 focus:border-school-green/40 transition-all bg-gray-50 placeholder:text-gray-400"
                 placeholder="Ask about admissions, boarding…"
                 aria-label="Chat input"
                 disabled={isTyping}
@@ -457,44 +497,40 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
               <button
                 onClick={() => send()}
                 disabled={isTyping || !input.trim()}
-                className="bg-school-green hover:bg-school-green/90 text-white px-3 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+                className="bg-school-green hover:bg-school-green/90 text-white px-3 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center shrink-0"
                 aria-label="Send message"
               >
                 <Send size={16} />
               </button>
             </div>
             <p className="text-[10px] text-gray-400 mt-1.5 text-center">
-              Supports English · isiXhosa · isiZulu · Sesotho
+              Gemini AI · English · isiXhosa · isiZulu · Sesotho
             </p>
           </div>
         </div>
       )}
 
-      {/* ── Toggle button ── */}
+      {/* ── Toggle FAB ── */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed z-50 bottom-4 right-4 sm:bottom-6 sm:right-6
+        className="fixed z-50 bottom-4 right-3 sm:bottom-6 sm:right-6
           w-14 h-14 rounded-full shadow-xl
           bg-school-green hover:bg-school-green/90
           text-white flex items-center justify-center
-          transition-all hover:scale-105 active:scale-95"
+          transition-all duration-200 hover:scale-105 active:scale-95"
         aria-label={open ? 'Close chatbot' : 'Open chatbot'}
       >
         <div className="relative">
-          {open ? <X size={22} /> : <MessageCircle size={22} />}
-          {!open && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
+          {open ? (
+            <X size={22} />
+          ) : (
+            <>
+              <MessageCircle size={22} />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
+            </>
           )}
         </div>
       </button>
-
-      {/* ── Animation keyframes ── */}
-      <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(12px) scale(0.97); }
-          to   { opacity: 1; transform: translateY(0)   scale(1); }
-        }
-      `}</style>
     </>
   );
 }
