@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { MessageCircle, X, Send, Globe, ChevronDown } from 'lucide-react';
+import { MessageCircle, X, Send, Globe, ChevronDown, Sparkles } from 'lucide-react';
 import { getApplications, type Application } from '../admin/utils/storage';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -86,19 +86,19 @@ function findApplication(apps: Application[], q: StatusQuery) {
 // ── Vulavula: detect language ────────────────────────────────────────────────
 async function detectLanguage(text: string): Promise<SupportedLang> {
   try {
-    const vulavulaKey = (process.env.VULAVULA_API_KEY as string) || '';
-    if (!vulavulaKey) return 'eng';
-
+    const key =
+      (import.meta as any).env?.VITE_VULAVULA_API_KEY ||
+      (import.meta as any).env?.VULAVULA_API_KEY ||
+      '';
+    if (!key) return 'eng';
     const res = await fetch('https://vulavula-services.lelapa.ai/api/v1/classify/process', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CLIENT-TOKEN': vulavulaKey },
+      headers: { 'Content-Type': 'application/json', 'X-CLIENT-TOKEN': key },
       body: JSON.stringify({ text }),
     });
-
     if (!res.ok) return 'eng';
     const data = await res.json();
-    const detected = data?.predicted_label?.toLowerCase() ?? 'eng';
-
+    const detected = (data?.predicted_label ?? '').toLowerCase();
     if (detected.includes('zul')) return 'zul';
     if (detected.includes('xho')) return 'xho';
     if (detected.includes('sot')) return 'sot';
@@ -108,27 +108,23 @@ async function detectLanguage(text: string): Promise<SupportedLang> {
   }
 }
 
-// ── Vulavula: translate text ────────────────────────────────────────────────
-async function translateText(
-  text: string,
-  sourceLang: SupportedLang,
-  targetLang: SupportedLang
-): Promise<string> {
-  if (sourceLang === targetLang) return text;
+async function translateText(text: string, src: SupportedLang, tgt: SupportedLang): Promise<string> {
+  if (src === tgt) return text;
   try {
-    const vulavulaKey = (process.env.VULAVULA_API_KEY as string) || '';
-    if (!vulavulaKey) return text;
-
+    const key =
+      (import.meta as any).env?.VITE_VULAVULA_API_KEY ||
+      (import.meta as any).env?.VULAVULA_API_KEY ||
+      '';
+    if (!key) return text;
     const res = await fetch('https://vulavula-services.lelapa.ai/api/v1/translate/process', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CLIENT-TOKEN': vulavulaKey },
+      headers: { 'Content-Type': 'application/json', 'X-CLIENT-TOKEN': key },
       body: JSON.stringify({
         input_text: text,
-        source_lang: VULAVULA_LANG_MAP[sourceLang],
-        target_lang: VULAVULA_LANG_MAP[targetLang],
+        source_lang: VULAVULA_LANG_MAP[src],
+        target_lang: VULAVULA_LANG_MAP[tgt],
       }),
     });
-
     if (!res.ok) return text;
     const data = await res.json();
     return data?.translation ?? text;
@@ -137,71 +133,70 @@ async function translateText(
   }
 }
 
-// ── Gemini: get AI answer (with model fallback) ──────────────────────────────
-async function askGemini(userMessage: string): Promise<string> {
-  const apiKey = (process.env.GEMINI_API_KEY as string) || '';
-  if (!apiKey) {
-    console.error('GEMINI_API_KEY is missing');
-    return "I'm sorry, I'm not configured correctly. Please contact the school directly.";
-  }
+// ── Claude AI (Anthropic) ────────────────────────────────────────────────────
+const SYSTEM_PROMPT = `You are a warm, knowledgeable and friendly assistant for Mt Hargreaves Senior Secondary School in Matatiele, Eastern Cape, South Africa.
 
-  const systemPrompt = `You are a helpful school assistant for Mt Hargreaves Senior Secondary School in Matatiele, Eastern Cape, South Africa.
-
-You help parents, learners and guardians with:
-- Admissions and application process
+You help parents, learners, guardians and community members with anything about the school:
+- Admissions and application process (general and boarding)
 - Required documents for applications
-- Boarding and hostel applications
-- School fees and payment information
+- Boarding / hostel information (HTL 02 & HTL 03 forms, bursaries)
+- School fees, payment and financial assistance
 - School hours and term dates
-- Contact information
-- General school information
+- Staff, departments and contact information
+- Academic results, achievements and activities
+- Sports, culture and extra-curricular programs
+- Student welfare and support services
+- General encouragement and guidance for parents and learners
 
 School details:
 - Name: Mt Hargreaves Senior Secondary School
-- Location: Sigoga Location, Mgubo A/A, Matatiele, 4730 Eastern Cape
+- Location: Sigoga Location, Mgubo A/A, Matatiele, 4730 (Eastern Cape)
 - Phone: +27 76 707 3212
 - Email: office@mounthargreavesss.co.za
 - Motto: "We Can"
 - Principal: Ms B Ngozwana
 - Deputy Principal: Mr M Leanya
-- School hours: Monday-Thursday 07:30-15:30, Friday 07:30-13:30
+- School hours: Monday–Thursday 07:30–15:30, Friday 07:30–13:30
+- Grades: Grade 8 to Grade 12
+- 2027 applications currently open (general and boarding)
+- 2025 Matric pass rate: 94.5% | Bachelor passes: 206 (71.8%) | Distinctions: 451
 
-Keep answers friendly, helpful and concise. If you don't know something specific, direct them to contact the school directly.`;
+Be warm, clear and concise. Always encourage. If you are unsure about something very specific, direct them to call or email the school.`;
 
-  // Try stable model first, then fall back to experimental
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+async function askClaude(userMessage: string): Promise<string> {
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }],
+      }),
+    });
 
-  for (const model of models) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ parts: [{ text: userMessage }], role: 'user' }],
-            generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        console.warn(`Gemini model ${model} returned HTTP ${res.status}, trying next...`);
-        continue;
-      }
-
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) return text;
-
-      console.warn(`Gemini model ${model} returned empty content, trying next...`);
-    } catch (err) {
-      console.warn(`Gemini model ${model} threw an error:`, err);
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn('[Chatbot] Claude API error:', response.status, errText);
+      throw new Error(`HTTP ${response.status}`);
     }
-  }
 
-  return "I'm having trouble connecting right now. Please contact the school at +27 76 707 3212 or office@mounthargreavesss.co.za.";
+    const data = await response.json();
+    const text = data?.content
+      ?.filter((b: any) => b.type === 'text')
+      .map((b: any) => b.text)
+      .join('\n')
+      .trim();
+
+    if (!text) throw new Error('Empty response');
+    return text;
+  } catch (err) {
+    console.error('[Chatbot] Claude request failed:', err);
+    return 'I\'m having trouble connecting right now. Please contact the school directly at +27 76 707 3212 or office@mounthargreavesss.co.za.';
+  }
 }
 
 // ── Main ChatbotWidget ───────────────────────────────────────────────────────
@@ -216,7 +211,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
       id: uid(),
       role: 'bot',
       createdAt: Date.now(),
-      text: 'Hi! I am the Mt Hargreaves Help Desk. I can answer questions about admissions, boarding, documents, and more. I also understand isiXhosa, isiZulu and Sesotho!',
+      text: "👋 Hello! Let me help you! Whether it's admissions, boarding, fees, results, activities or anything else about Mt Hargreaves SSS — just ask and I'll be happy to assist.",
     },
   ]);
 
@@ -224,17 +219,14 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const langMenuRef = useRef<HTMLDivElement | null>(null);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
-  // Auto-focus input when chat opens
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 150);
   }, [open]);
 
-  // Keyboard: Escape closes lang menu first, then chat
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -246,7 +238,6 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, showLangMenu]);
 
-  // Close lang menu when clicking outside
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
@@ -273,19 +264,19 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
     setIsTyping(true);
 
     try {
-      // 1. Application status lookup (no AI needed)
+      // 1. Local application status lookup
       const statusQ = parseStatusQuery(text);
       if (statusQ) {
         const app = findApplication(apps, statusQ);
         const replyText = app
           ? `I found the application for ${app.firstName} ${app.lastName} (Student number: ${app.studentNumber}). Status: ${app.status}.${app.submittedDate ? ` Submitted: ${formatDate(app.submittedDate)}.` : ''}`
-          : 'I could not find a matching application on this device. Please double-check the student number or the learner name and date of birth.';
+          : 'I could not find a matching application. Please double-check the student number or learner name and date of birth.';
         setMessages((prev) => [...prev, { id: uid(), role: 'bot', text: replyText, createdAt: Date.now() }]);
         setIsTyping(false);
         return;
       }
 
-      // 2. Detect language via Vulavula
+      // 2. Detect language
       const detectedLang = await detectLanguage(text);
       setCurrentLang(detectedLang);
 
@@ -294,10 +285,10 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
         ? await translateText(text, detectedLang, 'eng')
         : text;
 
-      // 4. Ask Gemini in English
-      const englishReply = await askGemini(englishText);
+      // 4. Ask Claude
+      const englishReply = await askClaude(englishText);
 
-      // 5. Translate reply back to user's language if needed
+      // 5. Translate reply back if needed
       const finalReply = detectedLang !== 'eng'
         ? await translateText(englishReply, 'eng', detectedLang)
         : englishReply;
@@ -329,7 +320,6 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
 
   return (
     <>
-      {/* Slide-up animation */}
       <style>{`
         @keyframes mh-chat-in {
           from { opacity: 0; transform: translateY(14px) scale(0.97); }
@@ -345,7 +335,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
             bottom-[4.5rem] right-3
             sm:bottom-24 sm:right-6
             w-[calc(100vw-1.5rem)] max-w-[375px]
-            h-[min(70vh,540px)]
+            h-[min(70vh,560px)]
             bg-white rounded-2xl shadow-2xl border border-gray-200
             flex flex-col overflow-hidden"
           role="dialog"
@@ -354,23 +344,21 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-school-green text-white shrink-0">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-[10px] font-black shrink-0 select-none tracking-tight">
-                MH
+              <div className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                <Sparkles size={16} />
               </div>
               <div className="min-w-0">
-                <div className="font-bold text-sm leading-tight truncate">Mt Hargreaves Help Desk</div>
+                <div className="font-bold text-sm leading-tight truncate">Mt Hargreaves Assistant</div>
                 <div className="flex items-center gap-1 text-[11px] text-white/70 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-300 inline-block animate-pulse" />
                   Online · AI-powered
-                  {currentLang !== 'eng' && (
-                    <span className="ml-1">· {LANG_LABELS[currentLang]}</span>
-                  )}
+                  {currentLang !== 'eng' && <span className="ml-1">· {LANG_LABELS[currentLang]}</span>}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              {/* Language selector */}
+              {/* Language dropdown */}
               <div className="relative" ref={langMenuRef}>
                 <button
                   onClick={() => setShowLangMenu((v) => !v)}
@@ -379,10 +367,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                 >
                   <Globe size={11} />
                   <span>{LANG_LABELS[currentLang].split(' ')[0]}</span>
-                  <ChevronDown
-                    size={10}
-                    className={`transition-transform duration-150 ${showLangMenu ? 'rotate-180' : ''}`}
-                  />
+                  <ChevronDown size={10} className={`transition-transform duration-150 ${showLangMenu ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showLangMenu && (
@@ -404,7 +389,6 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                 )}
               </div>
 
-              {/* Close */}
               <button
                 onClick={() => setOpen(false)}
                 className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -423,12 +407,12 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                 className={`flex items-end gap-1.5 ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 {m.role === 'bot' && (
-                  <div className="w-5 h-5 rounded-full bg-school-green flex items-center justify-center text-white text-[8px] font-black shrink-0 mb-0.5">
-                    MH
+                  <div className="w-6 h-6 rounded-full bg-school-green flex items-center justify-center shrink-0 mb-0.5">
+                    <Sparkles size={11} className="text-white" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm ${
+                  className={`max-w-[80%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${
                     m.role === 'user'
                       ? 'bg-school-green text-white rounded-br-sm'
                       : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
@@ -436,7 +420,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                 >
                   {m.text}
                   {m.detectedLang && (
-                    <div className="text-[10px] text-white/60 mt-1 flex items-center gap-1">
+                    <div className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                       <Globe size={9} /> Detected: {m.detectedLang}
                     </div>
                   )}
@@ -447,8 +431,8 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
             {/* Typing indicator */}
             {isTyping && (
               <div className="flex items-end gap-1.5">
-                <div className="w-5 h-5 rounded-full bg-school-green flex items-center justify-center text-white text-[8px] font-black shrink-0">
-                  MH
+                <div className="w-6 h-6 rounded-full bg-school-green flex items-center justify-center shrink-0">
+                  <Sparkles size={11} className="text-white" />
                 </div>
                 <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex gap-1 items-center">
                   <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -458,7 +442,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
               </div>
             )}
 
-            {/* Quick question chips — only before conversation starts */}
+            {/* Quick questions — first load only */}
             {showQuickQuestions && (
               <div className="pt-1">
                 <p className="text-[11px] text-gray-400 text-center mb-2">Quick questions:</p>
@@ -490,7 +474,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
                   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
                 }}
                 className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-school-green/20 focus:border-school-green/40 transition-all bg-gray-50 placeholder:text-gray-400"
-                placeholder="Ask about admissions, boarding…"
+                placeholder="Ask me anything about the school…"
                 aria-label="Chat input"
                 disabled={isTyping}
               />
@@ -504,7 +488,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
               </button>
             </div>
             <p className="text-[10px] text-gray-400 mt-1.5 text-center">
-              Gemini AI · English · isiXhosa · isiZulu · Sesotho
+              AI-powered · English · isiXhosa · isiZulu · Sesotho
             </p>
           </div>
         </div>
