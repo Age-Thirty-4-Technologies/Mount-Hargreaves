@@ -17,7 +17,7 @@ jobs:
         node-version: '20'
 
     - name: 📦 Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: 🔑 Create .env file
       run: |
@@ -36,8 +36,12 @@ jobs:
         VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
         VITE_VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
 
-    - name: 🔍 Verify chatbot message in build
-      run: grep -r "Let me help you" ./dist/ && echo "OLD message found" || echo "✅ Message updated"
+    - name: 🔍 Verify build
+      run: |
+        echo "--- JS files in dist ---"
+        ls -la ./dist/assets/*.js
+        echo "--- Checking chatbot message ---"
+        grep -r "Let me help you" ./dist/ && echo "⚠️ OLD message still in build" || echo "✅ Message has been updated"
 
     - name: 📂 Sync files to Host Africa
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
