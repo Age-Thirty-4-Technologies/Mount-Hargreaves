@@ -27,7 +27,7 @@ jobs:
         echo "VITE_VULAVULA_API_KEY=${{ secrets.VULAVULA_API_KEY }}" >> .env
         echo "APP_URL=https://mthargreavessss.co.za" >> .env
         echo "✅ .env file created"
-        cat .env | sed 's/=.*/=***/' 
+        cat .env | sed 's/=.*/=***/'
 
     - name: 🏗️ Build project
       run: npm run build
@@ -37,13 +37,16 @@ jobs:
         VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
         VITE_VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
 
+    - name: 🔍 Check dist contents
+      run: ls -la ./dist/
+
     - name: 📂 Sync files to Host Africa
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: /domains/mthargreavessss.co.za/public_html/
+        server-dir: domains/mthargreavessss.co.za/public_html/
         port: 21
         protocol: ftp
         local-dir: ./dist/
