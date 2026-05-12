@@ -1,3 +1,6 @@
+# Serve index.php first (bypasses nginx static file cache)
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -6,13 +9,13 @@
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
 
-  # Otherwise, redirect all requests to index.html for SPA routing
-  RewriteRule ^ index.html [QSA,L]
+  # Otherwise, route through index.php for SPA routing (bypasses nginx cache)
+  RewriteRule ^ index.php [QSA,L]
 </IfModule>
 
-# Prevent caching of index.html so new deployments are picked up immediately
+# Prevent caching of index.html and index.php
 <IfModule mod_headers.c>
-  <FilesMatch "^index\.html$">
+  <FilesMatch "^index\.(html|php)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
