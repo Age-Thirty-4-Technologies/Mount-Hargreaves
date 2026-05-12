@@ -193,8 +193,9 @@ function downloadDeclarationForm(parentName: string, year: string) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const Boarding = () => {
-  const [step,       setStep]       = useState<1 | 2 | 3>(1);
-  const [submitted,  setSubmitted]  = useState(false);
+  // Phase: 'boarding' → 'boardingComplete' → (optional) 'bursary' → 'allDone'
+  const [phase, setPhase] = useState<'boarding' | 'boardingComplete' | 'bursary' | 'allDone'>('boarding');
+  const [bursaryStep, setBursaryStep] = useState<1 | 2>(1);
   const [submitting, setSubmitting] = useState(false);
   const [error,      setError]      = useState('');
   const [files,      setFiles]      = useState<Record<string, File | null>>({});
@@ -314,22 +315,24 @@ export const Boarding = () => {
   const missingHTL02 = htl02RequiredUploads.filter(f => f.required && !files[f.key]);
   const missingHTL03 = htl03RequiredUploads.filter(f => f.required && !files[f.key]);
 
-  const validateStep = () => {
-    if (step === 1) {
-      if (!learner.surnameAndName || !learner.currentGrade || !learner.gender) {
-        setError('Please complete learner name, current grade, and gender.'); return false;
-      }
-      if (!father.surname || !father.name) {
-        setError('Please complete Father/Guardian surname and name.'); return false;
-      }
-      if (missingHTL02.length > 0) {
-        setError(`Please upload: ${missingHTL02.map(f => f.label).join(', ')}`); return false;
-      }
-      if (!undertaking) {
-        setError('Please accept the Parent/Guardian undertaking before proceeding.'); return false;
-      }
+  const validateBoarding = () => {
+    if (!learner.surnameAndName || !learner.currentGrade || !learner.gender) {
+      setError('Please complete learner name, current grade, and gender.'); return false;
     }
-    if (step === 2) {
+    if (!father.surname || !father.name) {
+      setError('Please complete Father/Guardian surname and name.'); return false;
+    }
+    if (missingHTL02.length > 0) {
+      setError(`Please upload: ${missingHTL02.map(f => f.label).join(', ')}`); return false;
+    }
+    if (!undertaking) {
+      setError('Please accept the Parent/Guardian undertaking before proceeding.'); return false;
+    }
+    setError(''); return true;
+  };
+
+  const validateBursaryStep = () => {
+    if (bursaryStep === 1) {
       if (!guardian.surname || !guardian.fullNames) {
         setError('Please complete guardian surname and full names (Section 3).'); return false;
       }
@@ -337,7 +340,7 @@ export const Boarding = () => {
         setError('Please complete at least one child\'s details in Section 4.'); return false;
       }
     }
-    if (step === 3) {
+    if (bursaryStep === 2) {
       if (missingHTL03.length > 0) {
         setError(`Please upload all required documents: ${missingHTL03.map(f => f.label).join(', ')}`);
         return false;
@@ -346,17 +349,17 @@ export const Boarding = () => {
     setError(''); return true;
   };
 
-  const goNext = () => { if (validateStep()) setStep(s => (s < 3 ? (s + 1) as 1|2|3 : s)); };
-  const goBack = () => { setError(''); setStep(s => (s > 1 ? (s - 1) as 1|2|3 : s)); };
+  const goBursaryNext = () => { if (validateBursaryStep()) setBursaryStep(s => (s < 2 ? (s + 1) as 1|2 : s)); };
+  const goBursaryBack = () => { setError(''); setBursaryStep(s => (s > 1 ? (s - 1) as 1|2 : s)); };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateStep()) return;
+  const saveApplication = async (includeBursary: boolean) => {
     setSubmitting(true);
     try {
       const uploads: UploadedFile[] = [];
-      const allUploads = [...htl02RequiredUploads, ...htl03RequiredUploads];
-      for (const field of allUploads) {
+      const uploadFields = includeBursary
+        ? [...htl02RequiredUploads, ...htl03RequiredUploads]
+        : htl02RequiredUploads;
+      for (const field of uploadFields) {
         const file = files[field.key];
         if (!file) continue;
         const dataUrl = await fileToDataUrl(file);
@@ -381,7 +384,7 @@ export const Boarding = () => {
         previousSchool:     '',
         lastGradeCompleted: '',
         medicalInfo:        learner.healthProblems || learner.allergiesAndDietaryInfo,
-        applicationType:    'Boarding',
+        applicationType:    includeBursary ? 'Boarding + Bursary' : 'Boarding',
         uploads,
         subjectMarks: [],
         averageMark:  0,
@@ -389,17 +392,83 @@ export const Boarding = () => {
         submittedDate: todayISO(),
       };
       setApplications([app, ...getApplications()]);
-      setSubmitted(true);
+      return true;
     } catch {
       setError('Something went wrong. Please try again.');
+      return false;
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleBoardingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateBoarding()) return;
+    const ok = await saveApplication(false);
+    if (ok) setPhase('boardingComplete');
+  };
+
+  const handleBursarySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateBursaryStep()) return;
+    const ok = await saveApplication(true);
+    if (ok) setPhase('allDone');
+  };
+
   // ── Success ───────────────────────────────────────────────────────────────
 
-  if (submitted) {
+  // ── Boarding Complete – show bursary CTA ──────────────────────────────────
+
+  if (phase === 'boardingComplete') {
+    return (
+      <div className="py-20 flex items-center justify-center min-h-[60vh]">
+        <motion.div
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.25 }}
+          className="text-center p-10 sm:p-12 bg-white rounded-3xl shadow-2xl max-w-lg"
+        >
+          <div className="w-20 h-20 bg-green-100 text-school-green rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={48} />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Boarding Application Submitted!</h2>
+          <p className="text-gray-600 mb-8">
+            Your HTL 02 hostel admission application has been received. The school will be in contact shortly.
+          </p>
+
+          {/* Bursary CTA */}
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 mb-8 text-left">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
+                <BedDouble size={22} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-amber-900 text-lg mb-2">Do you qualify for a bursary?</h3>
+                <p className="text-sm text-amber-800 mb-4 leading-relaxed">
+                  If you meet the requirements for a boarding bursary (HTL 03), you can apply now.
+                  Not everyone qualifies — bursaries are subject to eligibility criteria set by the
+                  Eastern Cape Department of Education.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setPhase('bursary'); setError(''); }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition shadow"
+                >
+                  <FileText size={16} /> Apply for a Bursary
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <a href="/" className="btn-primary w-full inline-block">Back to Home</a>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── All Done (boarding + bursary submitted) ───────────────────────────────
+
+  if (phase === 'allDone') {
     return (
       <div className="py-20 flex items-center justify-center min-h-[60vh]">
         <motion.div
@@ -411,7 +480,7 @@ export const Boarding = () => {
           <div className="w-20 h-20 bg-green-100 text-school-green rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={48} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Boarding Application Submitted!</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Boarding &amp; Bursary Application Submitted!</h2>
           <p className="text-gray-600 mb-8">
             Your HTL 02 hostel admission and HTL 03 bursary applications have been received. The school will be in contact shortly.
           </p>
@@ -432,9 +501,11 @@ export const Boarding = () => {
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-2xl p-4 flex gap-3">
           <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
           <div className="text-sm text-blue-800">
-            <strong>This application covers two forms:</strong><br />
-            <span className="font-medium">HTL 02</span> – Application for Admission to a Hostel &nbsp;|&nbsp;
-            <span className="font-medium">HTL 03</span> – Application for a Boarding Bursary (incl. Commissioner of Oaths declaration)
+            {phase === 'boarding' ? (
+              <><strong>HTL 02</strong> – Application for Admission to a Hostel</>
+            ) : (
+              <><strong>HTL 03</strong> – Application for a Boarding Bursary (incl. Commissioner of Oaths declaration)</>
+            )}
           </div>
         </div>
 
@@ -444,37 +515,43 @@ export const Boarding = () => {
           <div className="bg-school-green px-8 py-7 text-white">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4">
               <div>
-                <h2 className="text-2xl font-bold">Boarding & Bursary Application</h2>
+                <h2 className="text-2xl font-bold">
+                  {phase === 'boarding' ? 'Boarding Application' : 'Bursary Application'}
+                </h2>
                 <p className="text-white/70 text-sm mt-1">
-                  Province of the Eastern Cape – Department of Education &nbsp;·&nbsp; HTL 02 &amp; HTL 03
+                  Province of the Eastern Cape – Department of Education &nbsp;·&nbsp;
+                  {phase === 'boarding' ? 'HTL 02' : 'HTL 03'}
                 </p>
               </div>
               <div className="text-right text-xs text-white/60 leading-relaxed">
                 <div>Year: {learner.year}</div>
-                <div>Step {step} of 3</div>
+                {phase === 'bursary' && <div>Step {bursaryStep} of 2</div>}
               </div>
             </div>
 
             {/* Progress */}
-            <div className="relative h-1.5 bg-white/20 rounded-full mb-5 overflow-hidden">
-              <motion.div
-                className="absolute inset-y-0 left-0 bg-white rounded-full"
-                animate={{ width: `${((step - 1) / 2) * 100 + 33.33}%` }}
-                transition={{ duration: 0.4 }}
-              />
-            </div>
-            <div className="flex flex-wrap gap-5">
-              <StepBadge num={1} label="HTL 02 – Hostel Admission"   active={step === 1} done={step > 1} />
-              <StepBadge num={2} label="HTL 03 – Bursary Details"    active={step === 2} done={step > 2} />
-              <StepBadge num={3} label="Declaration & Documents"     active={step === 3} done={false} />
-            </div>
+            {phase === 'bursary' && (
+              <>
+                <div className="relative h-1.5 bg-white/20 rounded-full mb-5 overflow-hidden">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 bg-white rounded-full"
+                    animate={{ width: `${bursaryStep === 1 ? 50 : 100}%` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-5">
+                  <StepBadge num={1} label="Bursary Details"        active={bursaryStep === 1} done={bursaryStep > 1} />
+                  <StepBadge num={2} label="Declaration & Documents" active={bursaryStep === 2} done={false} />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={phase === 'boarding' ? handleBoardingSubmit : handleBursarySubmit}>
             <AnimatePresence mode="wait">
               <motion.div
-                key={step}
+                key={phase === 'boarding' ? 'boarding' : `bursary-${bursaryStep}`}
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -482,8 +559,8 @@ export const Boarding = () => {
                 className="p-6 sm:p-8 space-y-10"
               >
 
-                {/* ════════════ STEP 1 – HTL 02 ════════════ */}
-                {step === 1 && (
+                {/* ════════════ BOARDING – HTL 02 ════════════ */}
+                {phase === 'boarding' && (
                   <>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800 font-medium">
                       HTL 02 · Application for Admission to a Hostel — to be completed by the school once submitted
@@ -674,8 +751,8 @@ export const Boarding = () => {
                   </>
                 )}
 
-                {/* ════════════ STEP 2 – HTL 03 Bursary ════════════ */}
-                {step === 2 && (
+                {/* ════════════ BURSARY STEP 1 – HTL 03 Details ════════════ */}
+                {phase === 'bursary' && bursaryStep === 1 && (
                   <>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800 font-medium">
                       HTL 03 · Application for a Boarding Bursary — All children from one family attending the same school must be on one form
@@ -867,8 +944,8 @@ export const Boarding = () => {
                   </>
                 )}
 
-                {/* ════════════ STEP 3 – Declaration & Uploads ════════════ */}
-                {step === 3 && (
+                {/* ════════════ BURSARY STEP 2 – Declaration & Uploads ════════════ */}
+                {phase === 'bursary' && bursaryStep === 2 && (
                   <>
                     {/* Download declaration */}
                     <section className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
@@ -949,23 +1026,37 @@ export const Boarding = () => {
 
                 {/* Navigation */}
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <button type="button" onClick={goBack} disabled={step === 1}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition">
-                    <ChevronLeft size={16} /> Back
-                  </button>
-
-                  {step < 3 ? (
-                    <button type="button" onClick={goNext}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-school-green text-white text-sm font-bold hover:bg-school-green/90 transition shadow">
-                      Next <ChevronRight size={16} />
-                    </button>
+                  {phase === 'boarding' ? (
+                    <>
+                      <div />
+                      <button type="submit" disabled={submitting}
+                        className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-school-green text-white text-sm font-bold hover:bg-school-green/90 disabled:opacity-60 disabled:cursor-not-allowed transition shadow">
+                        {submitting
+                          ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting…</>
+                          : <><CheckCircle size={16} /> Submit Boarding Application</>}
+                      </button>
+                    </>
                   ) : (
-                    <button type="submit" disabled={submitting}
-                      className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-school-green text-white text-sm font-bold hover:bg-school-green/90 disabled:opacity-60 disabled:cursor-not-allowed transition shadow">
-                      {submitting
-                        ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting…</>
-                        : <><CheckCircle size={16} /> Submit Boarding Application</>}
-                    </button>
+                    <>
+                      <button type="button" onClick={bursaryStep === 1 ? () => setPhase('boardingComplete') : goBursaryBack}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                        <ChevronLeft size={16} /> Back
+                      </button>
+
+                      {bursaryStep < 2 ? (
+                        <button type="button" onClick={goBursaryNext}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-school-green text-white text-sm font-bold hover:bg-school-green/90 transition shadow">
+                          Next <ChevronRight size={16} />
+                        </button>
+                      ) : (
+                        <button type="submit" disabled={submitting}
+                          className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-school-green text-white text-sm font-bold hover:bg-school-green/90 disabled:opacity-60 disabled:cursor-not-allowed transition shadow">
+                          {submitting
+                            ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting…</>
+                            : <><CheckCircle size={16} /> Submit Bursary Application</>}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -975,7 +1066,7 @@ export const Boarding = () => {
         </div>
 
         <p className="text-xs text-gray-400 mt-4 text-center">
-          HTL 02 &amp; HTL 03 forms · Province of the Eastern Cape – Department of Education ·
+          {phase === 'boarding' ? 'HTL 02 form' : 'HTL 03 form'} · Province of the Eastern Cape – Department of Education ·
           Applications saved in school browser storage for this demo.
         </p>
       </div>
