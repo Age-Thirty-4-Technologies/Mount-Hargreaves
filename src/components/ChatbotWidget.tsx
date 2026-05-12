@@ -165,30 +165,42 @@ School details:
 Be warm, clear and concise. Always encourage. If you are unsure about something very specific, direct them to call or email the school.`;
 
 async function askGemini(userMessage: string): Promise<string> {
-  try {
-    const apiKey = process.env.GEMINI_API_KEY || '';
-    if (!apiKey) {
-      console.warn('[Chatbot] GEMINI_API_KEY not configured');
-      throw new Error('API key not configured');
-    }
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+    '';
 
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: userMessage,
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        maxOutputTokens: 1000,
-      },
-    });
-
-    const text = response.text?.trim();
-    if (!text) throw new Error('Empty response');
-    return text;
-  } catch (err) {
-    console.error('[Chatbot] Gemini request failed:', err);
-    return 'I\'m having trouble connecting right now. Please contact the school directly at +27 76 707 3212 or office@mounthargreavesss.co.za.';
+  if (!apiKey) {
+    console.warn('[Chatbot] GEMINI_API_KEY not configured');
+    return 'The assistant is not configured yet. Please contact the school directly at +27 76 707 3212 or office@mounthargreavesss.co.za.';
   }
+
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+  for (const model of models) {
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model,
+        contents: userMessage,
+        config: {
+          systemInstruction: SYSTEM_PROMPT,
+          maxOutputTokens: 1000,
+        },
+      });
+
+      const text = response.text?.trim();
+      if (!text) continue;
+      return text;
+    } catch (err: any) {
+      console.error(`[Chatbot] Gemini (${model}) failed:`, err?.message || err);
+      if (err?.message?.includes('API key') || err?.status === 403) {
+        return 'The assistant is temporarily unavailable. Please contact the school directly at +27 76 707 3212 or office@mounthargreavesss.co.za.';
+      }
+    }
+  }
+
+  return 'I\'m having trouble connecting right now. Please contact the school directly at +27 76 707 3212 or office@mounthargreavesss.co.za.';
 }
 
 // ── Main ChatbotWidget ───────────────────────────────────────────────────────
