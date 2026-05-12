@@ -37,8 +37,12 @@ jobs:
         VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
         VITE_VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
 
-    - name: 🔍 Check dist contents
-      run: ls -la ./dist/
+    - name: 🔍 Show build contents
+      run: |
+        echo "--- index.html ---"
+        cat ./dist/index.html
+        echo "--- assets ---"
+        ls -la ./dist/assets/
 
     - name: 📂 Sync files to Host Africa
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
