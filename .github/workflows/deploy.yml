@@ -22,7 +22,9 @@ jobs:
     - name: 🔑 Create .env file
       run: |
         echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env
+        echo "VITE_GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
         echo "VULAVULA_API_KEY=${{ secrets.VULAVULA_API_KEY }}" >> .env
+        echo "VITE_VULAVULA_API_KEY=${{ secrets.VULAVULA_API_KEY }}" >> .env
         echo "APP_URL=https://mthargreavessss.co.za" >> .env
         echo "✅ .env file created"
         cat .env | sed 's/=.*/=***/' 
@@ -31,7 +33,9 @@ jobs:
       run: npm run build
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
+        VITE_VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
 
     - name: 📂 Sync files to Host Africa
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -43,3 +47,4 @@ jobs:
         port: 21
         protocol: ftp
         local-dir: ./dist/
+        dangerous-clean-slate: true
