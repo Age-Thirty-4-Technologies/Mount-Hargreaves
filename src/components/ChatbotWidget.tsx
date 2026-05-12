@@ -159,7 +159,7 @@ School details:
 - Deputy Principal: Mr M Leanya
 - School hours: Monday–Thursday 07:30–15:30, Friday 07:30–13:30
 - Grades: Grade 8 to Grade 12
-- 2027 applications currently open (general and boarding)
+- 2026 applications are now CLOSED. 2027 applications are currently OPEN for both general and boarding admissions.
 - 2025 Matric pass rate: 94.5% | Bachelor passes: 206 (71.8%) | Distinctions: 451
 
 Be warm, clear and concise. Always encourage. If you are unsure about something very specific, direct them to call or email the school.`;
@@ -215,7 +215,7 @@ export function ChatbotWidget(props: { defaultOpen?: boolean }) {
       id: uid(),
       role: 'bot',
       createdAt: Date.now(),
-      text: "👋 Hello! Let me help you! Whether it's admissions, boarding, fees, results, activities or anything else about Mt Hargreaves SSS — just ask and I'll be happy to assist.",
+      text: "👋 Welcome to Mt Hargreaves Senior Secondary School!\n\n🎓 2027 applications are now OPEN for both general and boarding admissions.\n\nI can help you with applications, required documents, boarding info, school fees, results and more. How can I assist you today?",
     },
   ]);
 
