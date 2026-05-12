@@ -166,7 +166,7 @@ export interface Application {
   otherContactDetails?: OtherContactDetails;
 
   // Boarding
-  applicationType: 'General' | 'Boarding';
+  applicationType: 'General' | 'Boarding' | 'Boarding + Bursary';
   boardingType?: string;
 
   // Uploads
