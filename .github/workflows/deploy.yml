@@ -46,7 +46,8 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        server-dir:./
+        server-dir: domains/mthargreavessss.co.za/public_html/
         port: 21
         protocol: ftp
         local-dir: ./dist/
+        log-level: verbose
