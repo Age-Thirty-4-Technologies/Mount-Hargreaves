@@ -174,7 +174,7 @@ async function askGemini(userMessage: string): Promise<string> {
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       contents: userMessage,
       config: {
         systemInstruction: SYSTEM_PROMPT,
