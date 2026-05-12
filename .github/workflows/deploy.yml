@@ -28,6 +28,9 @@ jobs:
         echo "APP_URL=https://mthargreavessss.co.za" >> .env
         cat .env | sed 's/=.*/=***/'
 
+    - name: 🧹 Clear build cache
+      run: rm -rf ./dist ./node_modules/.vite
+
     - name: 🏗️ Build project
       run: npm run build
       env:
@@ -38,10 +41,9 @@ jobs:
 
     - name: 🔍 Verify build
       run: |
-        echo "--- JS files in dist ---"
+        echo "--- JS files ---"
         ls -la ./dist/assets/*.js
-        echo "--- Checking chatbot message ---"
-        grep -r "Let me help you" ./dist/ && echo "⚠️ OLD message still in build" || echo "✅ Message has been updated"
+        grep -r "Let me help you" ./dist/ && echo "⚠️ OLD message" || echo "✅ NEW message"
 
     - name: 📂 Sync files to Host Africa
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
