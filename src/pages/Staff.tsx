@@ -126,9 +126,11 @@ export const Staff = () => {
         </div>
 
         {/* Staff Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+        <div className="flex flex-wrap justify-center gap-5">
           {filtered.map((member, index) => (
-            <StaffCard key={index} member={member} />
+            <div key={index} className="w-[calc(50%-10px)] sm:w-[calc(33.333%-14px)] md:w-[calc(25%-15px)] lg:w-[calc(20%-16px)]">
+              <StaffCard member={member} />
+            </div>
           ))}
         </div>
 
