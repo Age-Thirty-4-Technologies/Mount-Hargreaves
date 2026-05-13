@@ -161,6 +161,15 @@ export const Footer = () => {
           >
             Staff Portal
           </Link>
+          <span className="mx-2 text-white/20">·</span>
+          <a
+            href="https://agethirty4.co.za"
+            target="_blank"
+            rel="noreferrer"
+            className="text-white/30 hover:text-white/60 text-xs mt-2 inline-block transition-colors"
+          >
+            Powered by AGE34
+          </a>
         </div>
 
       </div>
