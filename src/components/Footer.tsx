@@ -25,7 +25,7 @@ export const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Grid: stacks on mobile, 4 cols on desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
 
           {/* Col 1 — Logo + Name + Socials */}
           <div className="sm:col-span-2 lg:col-span-1">
@@ -80,16 +80,57 @@ export const Footer = () => {
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="shrink-0" />
-                <span>+27 76 707 3212</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Mail size={16} className="shrink-0 mt-0.5" />
-                <span className="break-all">office@mounthargreavesss.co.za</span>
+                <span>+27 83 717 6264</span>
               </li>
             </ul>
           </div>
 
-          {/* Col 3 — School Hours */}
+          {/* Col 3 — Email */}
+          <div>
+            <h4 className="text-sm font-bold mb-4 border-b border-white/20 pb-2 uppercase tracking-wide">
+              Email
+            </h4>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <Mail size={16} className="shrink-0 mt-0.5 text-white/80" />
+                <div>
+                  <p className="text-white/50 text-xs uppercase tracking-wide font-semibold mb-0.5">Principal</p>
+                  <a
+                    href="mailto:principal@mthargreavessss.co.za"
+                    className="text-white/80 hover:text-white transition-colors break-all"
+                  >
+                    principal@mthargreavessss.co.za
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <Mail size={16} className="shrink-0 mt-0.5 text-white/80" />
+                <div>
+                  <p className="text-white/50 text-xs uppercase tracking-wide font-semibold mb-0.5">Admin</p>
+                  <a
+                    href="mailto:admin@mthargreavessss.co.za"
+                    className="text-white/80 hover:text-white transition-colors break-all"
+                  >
+                    admin@mthargreavessss.co.za
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <Mail size={16} className="shrink-0 mt-0.5 text-white/80" />
+                <div>
+                  <p className="text-white/50 text-xs uppercase tracking-wide font-semibold mb-0.5">Hostel</p>
+                  <a
+                    href="mailto:hosteladmin@mthargreavessss.co.za"
+                    className="text-white/80 hover:text-white transition-colors break-all"
+                  >
+                    hosteladmin@mthargreavessss.co.za
+                  </a>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 4 — School Hours */}
           <div>
             <h4 className="text-sm font-bold mb-4 border-b border-white/20 pb-2 uppercase tracking-wide">
               School Hours
