@@ -28,5 +28,16 @@ jobs:
         echo "APP_URL=https://mthargreavessss.co.za" >> .env
         cat .env | sed 's/=.*/=***/'
 
-    - name: 🧹 Clear build cache
-      run: rm
+    - name: 🏗️ Build project
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
+        VITE_VULAVULA_API_KEY: ${{ secrets.VULAVULA_API_KEY }}
+
+    - name: 📂 Sync files to Host Africa
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
