@@ -19,8 +19,9 @@ export const Contact = () => {
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <h2 className="text-2xl font-bold text-school-green mb-8">Get in Touch</h2>
             <div className="space-y-8">
+
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-blue-50 text-school-green rounded-xl">
+                <div className="p-3 bg-blue-50 text-school-green rounded-xl shrink-0">
                   <MapPin size={24} />
                 </div>
                 <div>
@@ -28,8 +29,9 @@ export const Contact = () => {
                   <p className="text-gray-600">{info.address}</p>
                 </div>
               </div>
+
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-blue-50 text-school-green rounded-xl">
+                <div className="p-3 bg-blue-50 text-school-green rounded-xl shrink-0">
                   <Phone size={24} />
                 </div>
                 <div>
@@ -37,17 +39,38 @@ export const Contact = () => {
                   <p className="text-gray-600">{info.phone}</p>
                 </div>
               </div>
+
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-blue-50 text-school-green rounded-xl">
+                <div className="p-3 bg-blue-50 text-school-green rounded-xl shrink-0">
                   <Mail size={24} />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <h3 className="font-bold text-gray-900">Email</h3>
-                  <p className="text-gray-600 break-words">{info.email}</p>
+                  <div className="flex flex-col gap-1 text-sm text-gray-600">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 w-20 shrink-0">Principal</span>
+                      <a href={`mailto:${info.emailPrincipal}`} className="hover:text-school-green transition-colors break-all">
+                        {info.emailPrincipal}
+                      </a>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 w-20 shrink-0">Admin</span>
+                      <a href={`mailto:${info.emailAdmin}`} className="hover:text-school-green transition-colors break-all">
+                        {info.emailAdmin}
+                      </a>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 w-20 shrink-0">Hostel</span>
+                      <a href={`mailto:${info.emailHostelAdmin}`} className="hover:text-school-green transition-colors break-all">
+                        {info.emailHostelAdmin}
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
+
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-blue-50 text-school-green rounded-xl">
+                <div className="p-3 bg-blue-50 text-school-green rounded-xl shrink-0">
                   <Clock size={24} />
                 </div>
                 <div>
