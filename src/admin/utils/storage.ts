@@ -183,7 +183,9 @@ export interface Application {
 export interface ContactInfo {
   address: string;
   phone: string;
-  email: string;
+  emailPrincipal: string;
+  emailAdmin: string;
+  emailHostelAdmin: string;
   monThu: string;
   friday: string;
   weekend: string;
@@ -303,8 +305,10 @@ export const setApplications = (items: Application[]) => setItems('admin_applica
 // Contact
 const defaultContact: ContactInfo = {
   address: 'Sigoga Location, Mgubo A/A, Matatiele, 4730 (Eastern Cape)',
-  phone: '+27 76 707 3212',
-  email: 'office@mounthargreavesss.co.za',
+  phone: '+27 83 717 6264',
+  emailPrincipal: 'principal@mthargreavessss.co.za',
+  emailAdmin: 'admin@mthargreavessss.co.za',
+  emailHostelAdmin: 'hosteladmin@mthargreavessss.co.za',
   monThu: '07:30 - 15:30',
   friday: '07:30 - 13:30',
   weekend: 'Closed',
